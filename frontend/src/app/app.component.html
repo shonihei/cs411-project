@@ -5,5 +5,7 @@
     </div>
     <button type="submit">Submit</button>
 </form>
-<div>{{query}}</div>
+<div *ngIf="news">
+    result: {{news}}
+</div>
 <router-outlet></router-outlet>
