@@ -1,0 +1,9 @@
+<form (ngSubmit)="onSubmit()">
+    <div class="form-group">
+        <label for="query">Query:</label>
+        <input type="text" [(ngModel)]="query" name="query">
+    </div>
+    <button type="submit">Submit</button>
+</form>
+<div>{{query}}</div>
+<router-outlet></router-outlet>
