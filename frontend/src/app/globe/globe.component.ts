@@ -33,7 +33,7 @@ export class GlobeComponent implements OnInit {
 
   // TODO: fix any type for p
   private draw(p: any) {
-    p.r = 250;
+    p.r = 350;
     p.coordinates = [
       { lat: -33.8688, long: 151.2093 }, // Sydney, Australia
       { lat: 35.6762, long: 139.6503 },  // Tokyo, Japan
@@ -51,16 +51,24 @@ export class GlobeComponent implements OnInit {
       cnv.canvas.style.display = 'block';
     }
 
+    p.hello = true;
     p.draw = () => {
       p.background(0);
-      p.camera(0, 0, 600, 0, 0, 0, 0, 1, 0);
+      p.orbitControl(1, 0);
+      // p.camera(0, 0, 600, 0, 0, 0, 0, 1, 0);
+      // p.translate(0, 0, 250);
+
       p.rotateY(p.frameCount * -0.001);
       p.noStroke();
       p.texture(p.img);
-      p.sphere(250);
+      p.sphere(350);
 
       p.drawCoordinates();
     }
+
+    // p.mousePressed = () => {
+    //   console.log(p.mouseX, p.mouseY);
+    // }
 
     p.drawCoordinates = () => {
       for (let coordinate of p.coordinates) {
