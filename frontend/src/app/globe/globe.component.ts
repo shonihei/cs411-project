@@ -1,13 +1,9 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
-import { Coordinate } from './coordinate';
-import * as THREE from "three";
+import * as THREE from 'three';
 import { Raycaster, Vector2 } from 'three';
-// import * as p5 from "p5";
-
-export class MousePosition {
-  x: number;
-  y: number;
-}
+import { OrbitControls } from 'three-orbitcontrols-ts';
+import { TextureLoaderService } from '../services/texture-loader.service';
+import { Article, Globe } from './objects';
 
 @Component({
   selector: 'app-globe',
@@ -16,77 +12,69 @@ export class MousePosition {
 })
 export class GlobeComponent implements OnInit, AfterViewInit {
   @ViewChild('canvas') canvasRef: ElementRef;
-  // private sketch: p5;
-  // private earthTexture: p5.Image;
   private renderer: THREE.WebGLRenderer;
   private camera: THREE.PerspectiveCamera;
-  private cameraTarget: THREE.Vector3;
-  public scene: THREE.Scene;
+  private scene: THREE.Scene;
   private texture: THREE.Texture;
-  private globe: THREE.Group;
   private raycaster: THREE.Raycaster;
+  private controls: OrbitControls;
+
+  private globe: Globe;
+  readonly GLOBE_RADIUS = 200;
+
+  private article: Article;
+
+  private intersectGlobe = false;
+
+  public fieldOfView = 45;
+  public nearClippingPane = 0.1;
+  public farClippingPane = 10000;
+
   private mouse: THREE.Vector2;
 
-  public fieldOfView: number = 45;
-  public nearClippingPane: number = 0.1;
-  public farClippingPane: number = 10000;
-  private lastPosition: MousePosition = {
-    x: window.innerWidth / 2,
-    y: window.innerHeight / 2
-  }
-
-  constructor() {
-    this.render = this.render.bind(this);
-    this.raycaster = new Raycaster();
-    this.mouse = new Vector2();
-  }
-
-  ngOnInit() { }
-
-  ngAfterViewInit() {
-    this.createCamera();
-    this.createScene();
-  }
-
-  public onClick(e: MouseEvent) {
-    this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    this.mouse.y = - (e.clientY / window.innerHeight) * 2 + 1;
-    console.log(this.mouse);
+  private get normalizedMouse(): THREE.Vector2 {
+    return new THREE.Vector2(
+      (this.mouse.x / window.innerWidth) * 2 - 1,
+      -(this.mouse.y / window.innerHeight) * 2 + 1
+    );
   }
 
   private get canvas(): HTMLCanvasElement {
     return this.canvasRef.nativeElement;
   }
 
-  private createScene() {
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x000000);
+  private get aspectRatio(): number {
+    const height = this.canvas.clientHeight;
+    if (height === 0) {
+      return 0;
+    }
+    return this.canvas.clientWidth / this.canvas.clientHeight;
+  }
 
-    const RADIUS = 200;
-    const SEGMENTS = 50;
-    const RINGS = 50;
-    this.globe = new THREE.Group();
-    this.scene.add(this.globe);
-    var loader = new THREE.TextureLoader();
-    var self = this;
-    loader.load('../assets/img/earthDark.jpg', function (texture) {
-      console.log("success");
-      var sphere = new THREE.SphereGeometry(RADIUS, SEGMENTS, RINGS);
-      var material = new THREE.MeshBasicMaterial({ map: texture });
-      var mesh = new THREE.Mesh(sphere, material);
-      self.globe.add(mesh);
-      self.globe.position.z = -300;
+  constructor(private textureLoaderService: TextureLoaderService) {
+    this.render = this.render.bind(this);
+    this.raycaster = new Raycaster();
+    this.mouse = new Vector2(0, 0);
+  }
 
-      self.camera.lookAt(self.globe.position);
-      self.startRendering();
-    });
+  ngOnInit() { }
+
+  ngAfterViewInit() {
+    this.textureLoaderService
+      .getTexture('../assets/img/earthDark.jpg')
+      .subscribe(texture => {
+        this.texture = texture;
+        this.createCamera();
+        this.createScene();
+        this.addControls();
+        this.startRendering();
+      });
   }
 
   private createCamera() {
-    let aspectRatio = this.getAspectRatio();
     this.camera = new THREE.PerspectiveCamera(
       this.fieldOfView,
-      aspectRatio,
+      this.aspectRatio,
       this.nearClippingPane,
       this.farClippingPane
     );
@@ -94,15 +82,35 @@ export class GlobeComponent implements OnInit, AfterViewInit {
     // Set position and look at
     this.camera.position.x = 0;
     this.camera.position.y = 0;
-    this.camera.position.z = 500;
+    this.camera.position.z = 800;
   }
 
-  private getAspectRatio(): number {
-    let height = this.canvas.clientHeight;
-    if (height === 0) {
-      return 0;
-    }
-    return this.canvas.clientWidth / this.canvas.clientHeight;
+  private createScene() {
+    const SEGMENTS = 50;
+    const RINGS = 50;
+
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x000000);
+    this.globe = new Globe(this.GLOBE_RADIUS, SEGMENTS, RINGS, this.texture, this.scene);
+    this.globe.addToScene();
+    
+    // adding article as a demo
+    this.article = new Article({lat: 35.6762, long: 139.6503});
+    this.globe.addArticle(this.article);
+  }
+
+  private addControls() {
+    this.controls = new OrbitControls(this.camera);
+    this.controls.rotateSpeed = 0.5;
+    this.controls.enablePan = false;
+    this.controls.minDistance = 400;
+    this.controls.maxDistance = 800;
+    this.controls.autoRotate = true;
+    this.controls.autoRotateSpeed = -0.5;
+
+    // fixes vertical orbit to 45 degrees
+    this.controls.minPolarAngle = 45 * Math.PI / 180;
+    this.controls.maxPolarAngle = 135 * Math.PI / 180;
   }
 
   private startRendering() {
@@ -113,28 +121,34 @@ export class GlobeComponent implements OnInit, AfterViewInit {
     this.renderer.setPixelRatio(devicePixelRatio);
     this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.setClearColor(0xffffff, 1);
-    this.renderer.autoClear = true;
-
     this.render();
   }
 
-  private test = true;
+  private render() {
+    this.controls.update();
 
-  public render() {
-    this.raycaster.setFromCamera(this.mouse, this.camera);
-    const intersects = this.raycaster.intersectObjects(this.scene.children, true);
-    if (this.test) {
-      this.test = false;
-      for (let object of intersects) {
-        console.log(object);
-      }
+    this.raycaster.setFromCamera(this.normalizedMouse, this.camera);
+    const intersects = this.raycaster.intersectObjects(this.scene.children);
+    if (intersects.length && intersects[0].object === this.globe.mesh) {
+      this.intersectGlobe = true;
+      this.article.material.color.setHex(0xffffff);
+    } else if (intersects.length && intersects[0].object === this.article.mesh) {
+      this.article.material.color.setHex(0xff0000);
+    } else {
+      this.article.material.color.setHex(0xffffff);
+      this.intersectGlobe = false;
+    }
+
+    if (this.intersectGlobe) {
+      console.log('dragging');
     }
 
     requestAnimationFrame(this.render);
-    this.globe.rotation.y -= 0.005;
     this.renderer.render(this.scene, this.camera);
+  }
+
+  public onClick(e: MouseEvent) {
+    this.mouse.x = e.clientX;
+    this.mouse.y = e.clientY;
   }
 }
