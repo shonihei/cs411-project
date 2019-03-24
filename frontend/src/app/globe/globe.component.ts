@@ -91,12 +91,31 @@ export class GlobeComponent implements OnInit, AfterViewInit {
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000000);
+
     this.globe = new Globe(this.GLOBE_RADIUS, SEGMENTS, RINGS, this.texture, this.scene);
     this.globe.addToScene();
-    
+
     // adding article as a demo
-    this.article = new Article({lat: 35.6762, long: 139.6503});
-    this.globe.addArticle(this.article);
+    const articles = [
+      new Article({ lat: 40.7128, long: -74.0060 }),   // New York
+      new Article({ lat: 35.6895, long: 139.69171 }),  // tokyo
+      new Article({ lat: 34.69374, long: 135.50218 }), // osaka
+      new Article({ lat: 30.79186, long: -83.78989 }), // Boston
+      new Article({ lat: 47.60621, long: -122.33207 }),// seattle
+      new Article({ lat: 34.05223, long: -118.24368 }),// LA
+      new Article({ lat: 51.50853, long: -0.12574 }),  // London
+      new Article({ lat: 41.38879, long: 2.15899 }),   // Barcelona
+      new Article({ lat: 55.75222, long: 37.61556 }),  // Moscow
+      new Article({ lat: 30.0444, long: 31.2357}),     // cairo
+      new Article({ lat: -23.5505, long: -46.6333}),   // Sao Paulo
+      new Article({ lat: -1.2921, long: 36.8219}),     // Nairobi
+      new Article({ lat: 6.5244, long: 3.3792}),       // Lagos
+      new Article({ lat: 19.0760, long: 72.8777}),     // Mumbai
+      new Article({ lat: 39.9042, long: 116.4074}),    // Beijing
+    ]
+    for (const article of articles) {
+      this.globe.addArticle(article);
+    }
   }
 
   private addControls() {
@@ -125,22 +144,23 @@ export class GlobeComponent implements OnInit, AfterViewInit {
   }
 
   private render() {
+
     this.controls.update();
 
     this.raycaster.setFromCamera(this.normalizedMouse, this.camera);
     const intersects = this.raycaster.intersectObjects(this.scene.children);
     if (intersects.length && intersects[0].object === this.globe.mesh) {
       this.intersectGlobe = true;
-      this.article.material.color.setHex(0xffffff);
-    } else if (intersects.length && intersects[0].object === this.article.mesh) {
-      this.article.material.color.setHex(0xff0000);
-    } else {
-      this.article.material.color.setHex(0xffffff);
-      this.intersectGlobe = false;
-    }
+      // this.article.material.color.setHex(0xffffff);
+    } //else if (intersects.length && intersects[0].object === this.article.mesh) {
+    //   this.article.material.color.setHex(0xff0000);
+    // } else {
+    //   this.article.material.color.setHex(0xffffff);
+    //   this.intersectGlobe = false;
+    // }
 
     if (this.intersectGlobe) {
-      console.log('dragging');
+      // console.log('dragging');
     }
 
     requestAnimationFrame(this.render);

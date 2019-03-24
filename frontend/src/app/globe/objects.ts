@@ -7,12 +7,13 @@ export class LatLong {
 export class Article {
     public mesh: THREE.Mesh;
     public material: THREE.MeshBasicMaterial;
-    private geometry: THREE.BoxGeometry;
+    private geometry: THREE.CircleGeometry;
 
     constructor(readonly latlong: LatLong) {
+        this.geometry = new THREE.CircleGeometry(5, 32);
         this.material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        this.geometry = new THREE.BoxGeometry(5, 5, 5);
         this.mesh = new THREE.Mesh(this.geometry, this.material);
+        // this.mesh.add(new THREE.AxesHelper(100));
     };
 
     public get latlongRad(): LatLong {
@@ -24,7 +25,12 @@ export class Article {
 
     public setPosition(pos: THREE.Vector3) {
         this.mesh.position.set(pos.x, pos.y, pos.z);
-        this.mesh.rotation.set(0.0, -this.latlongRad.long, this.latlongRad.lat - Math.PI * 0.5);
+    }
+
+    public lookAwayFrom(target: THREE.Mesh) {
+        const v = new THREE.Vector3();
+        v.subVectors(this.mesh.position, target.position).add(this.mesh.position);
+        this.mesh.lookAt(v);
     }
 }
 
@@ -35,6 +41,7 @@ export class Globe {
         readonly TEXTURE: THREE.Texture, private scene: THREE.Scene) {
         const sphereGeometry = new THREE.SphereGeometry(this.RADIUS, this.SEGMENTS, this.RINGS);
         const material = new THREE.MeshBasicMaterial({ map: this.TEXTURE });
+        // const material = new THREE.MeshBasicMaterial({ color: "yellow", wireframe: true});
         this.mesh = new THREE.Mesh(sphereGeometry, material);
     }
 
@@ -47,6 +54,7 @@ export class Globe {
         const latlongRad = article.latlongRad;
         const cartesianCoord = this.convertToCartesian(latlongRad);
         article.setPosition(cartesianCoord);
+        article.lookAwayFrom(this.mesh);
         this.scene.add(article.mesh);
     }
 
