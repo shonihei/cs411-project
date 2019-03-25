@@ -7,18 +7,19 @@ export class Article {
   private geometry: THREE.CircleGeometry;
 
   constructor(readonly latlong: LatLong) {
-    this.geometry = new THREE.CircleGeometry(5, 32);
+    this.geometry = new THREE.CircleGeometry(7, 32);
     this.material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    this.material.opacity = 0.5;
+    this.material.transparent = true;
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.name = 'article';
-    // this.mesh.add(new THREE.AxesHelper(100));
   }
 
   public get latlongRad(): LatLong {
-    return new LatLong(
-      this.latlong.lat * (Math.PI / 180),
-      -this.latlong.long * (Math.PI / 180)
-    );
+    return {
+      lat: this.latlong.lat * (Math.PI / 180),
+      long: -this.latlong.long * (Math.PI / 180)
+    };
   }
 
   public setPosition(pos: THREE.Vector3) {

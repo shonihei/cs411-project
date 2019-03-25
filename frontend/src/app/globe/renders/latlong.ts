@@ -1,3 +1,4 @@
-export class LatLong {
-  constructor(public lat: number, public long: number) { }
+export interface LatLong {
+  lat: number;
+  long: number;
 }
