@@ -8,7 +8,7 @@ describe('GlobeComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ GlobeComponent ]
+      declarations: [GlobeComponent]
     })
     .compileComponents();
   }));

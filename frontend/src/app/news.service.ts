@@ -9,9 +9,9 @@ export class NewsService {
 
   getNews(query: string): string[] {
     return [
-      "bears",
-      "beets",
-      "battlestar galactica",
-    ]
+      'bears',
+      'beets',
+      'battlestar galactica',
+    ];
   }
 }
