@@ -3,6 +3,7 @@ import { LatLong } from './latlong';
 import { Article } from './article';
 import { OrbitControls } from 'three-orbitcontrols-ts';
 import { MouseEmitterService } from '../../services/mouse-emitter.service';
+import { RenderEventsService, EventType } from 'src/app/services/render-events.service';
 
 export class Globe {
   private renderer: THREE.WebGLRenderer;
@@ -10,58 +11,67 @@ export class Globe {
   private scene: THREE.Scene;
   private raycaster: THREE.Raycaster;
   private controls: OrbitControls;
+  private animationGroup: THREE.AnimationObjectGroup;
+  private clock: THREE.Clock;
+  private animationMixer: THREE.AnimationMixer;
 
   public mesh: THREE.Mesh;
-
-  readonly GLOBE_RADIUS = 200;
 
   public fieldOfView = 45;
   public nearClippingPane = 0.1;
   public farClippingPane = 10000;
 
-  private intersectGlobe = false;
-
   private mouse: THREE.Vector2;
 
   constructor(readonly RADIUS: number, readonly SEGMENTS: number, readonly RINGS: number,
               readonly texture: THREE.Texture, readonly canvas: HTMLCanvasElement,
-              private mouseEmitter: MouseEmitterService) {
-    const sphereGeometry = new THREE.SphereGeometry(this.RADIUS, this.SEGMENTS, this.RINGS);
-    const material = new THREE.MeshBasicMaterial({ map: this.texture });
-    this.mesh = new THREE.Mesh(sphereGeometry, material);
-    this.mesh.name = 'globe';
-    this.animate = this.animate.bind(this);
-    this.raycaster = new THREE.Raycaster();
-
-    /* initializing mouse pos to (0, 0) will trigger the raycasting before a click
-     * occurs and it will register an intersection if:
-     * 1. globe is zoomed in
-     * 2. client screen size is too small
-     * so that the globe pixel fills the top left corner of the screen.
-     *
-     * To prevent this behavior, infinity is used to signal to render() that it
-     * does not need to raycast
-     */
+              private mouseEmitter: MouseEmitterService,
+              private renderEvents: RenderEventsService) {
+    // mouse coordinate of infinity is used to signal that there's no mouse activity
     this.mouse = new THREE.Vector2(Infinity, Infinity);
-
     this.mouseEmitter.mouseCoord$.subscribe((coord) => {
       this.mouse.x = coord.x;
       this.mouse.y = coord.y;
     });
+
+    this.animate = this.animate.bind(this);
   }
 
   public init() {
+    this.initializeGlobe();
+    this.initializeArticleAnimation();
+
     this.createCamera();
     this.createScene();
     this.addControls();
     this.startRendering();
   }
 
+  private initializeGlobe() {
+    this.raycaster = new THREE.Raycaster();
+    this.clock = new THREE.Clock();
+
+    const sphereGeometry = new THREE.SphereGeometry(this.RADIUS, this.SEGMENTS, this.RINGS);
+    const material = new THREE.MeshBasicMaterial({ map: this.texture });
+    this.mesh = new THREE.Mesh(sphereGeometry, material);
+    this.mesh.name = 'globe';
+  }
+
+  private initializeArticleAnimation() {
+    this.animationGroup = new THREE.AnimationObjectGroup();
+    const opacityKF = new THREE.NumberKeyframeTrack('.material.opacity', [0, 1, 2], [1, 0.5, 0]);
+    const scaleKF =
+      new THREE.VectorKeyframeTrack('.scale', [0, 1, 2], [0, 0, 0, 0.75, 0.75, 0.75, 1, 1, 1]);
+    const clip = new THREE.AnimationClip('default', 3, [opacityKF, scaleKF]);
+    this.animationMixer = new THREE.AnimationMixer(this.animationGroup);
+    const clipAction = this.animationMixer.clipAction(clip);
+    clipAction.play();
+  }
+
   private createScene() {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000000);
     this.scene.add(this.mesh);
-    this.scene.add(new THREE.AxesHelper(1000));
   }
 
   public addArticle(article: Article) {
@@ -70,6 +80,8 @@ export class Globe {
     article.setPosition(cartesianCoord);
     article.lookAwayFrom(this.mesh);
     this.scene.add(article.mesh);
+
+    this.animationGroup.add(article.mesh);
   }
 
   /**
@@ -84,6 +96,9 @@ export class Globe {
     );
   }
 
+  /**
+   * normalizes current mouse coordinate to -1, 1 on x, y
+   */
   private get normalizedMouse(): THREE.Vector2 {
     return new THREE.Vector2(
       (this.mouse.x / window.innerWidth) * 2 - 1,
@@ -148,36 +163,28 @@ export class Globe {
   }
 
   private render() {
-
     this.controls.update();
 
-    if (this.validMousePosition()) {
-      this.raycaster.setFromCamera(this.normalizedMouse, this.camera);
-      const intersects = this.raycaster.intersectObjects(this.scene.children);
-      // console.log(intersects.length);
-      // console.log(this.mouse);
-      if (intersects.length) {
-        const firstIntersect = intersects[0].object;
-        if (firstIntersect.name === this.mesh.name) {
-          console.log('clicked on globe');
-        } else if (firstIntersect.name === 'article') {
-          console.log('clicked on an article');
-        }
-        // this.intersectGlobe = true;
-      }
+    const delta = this.clock.getDelta();
+    if (this.animationMixer) {
+      this.animationMixer.update(delta);
     }
 
-    // } else if (intersects.length && intersects[0].object === this.article.mesh) {
-    //   this.article.material.color.setHex(0xff0000);
-    // } else {
-    //   this.article.material.color.setHex(0xffffff);
-    //   this.intersectGlobe = false;
-    // }
-
-    if (this.intersectGlobe) {
-      // console.log('dragging');
+    if (this.validMousePosition()) {
+      this.checkIntersection();
     }
 
     this.renderer.render(this.scene, this.camera);
+  }
+
+  private checkIntersection() {
+    this.raycaster.setFromCamera(this.normalizedMouse, this.camera);
+    const intersects = this.raycaster.intersectObjects(this.scene.children);
+    if (intersects.length) {
+      const firstIntersect = intersects[0].object;
+      if (firstIntersect.name === 'article') {
+        this.renderEvents.emitNewEvent({ type: EventType.Click, target: firstIntersect });
+      }
+    }
   }
 }
