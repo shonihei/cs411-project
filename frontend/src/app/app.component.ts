@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { NewsService } from './news.service';
 
 @Component({
   selector: 'app-root',
@@ -8,18 +7,6 @@ import { NewsService } from './news.service';
 })
 export class AppComponent {
   title = 'global-news';
-  query = '';
-  news: string[] = [];
 
-  constructor(private newsService: NewsService) { }
-
-  onSubmit() {
-    console.log(`queried for ${this.query}`);
-    this.getNews();
-    console.log(`res: ${this.news}`);
-  }
-
-  getNews(): void {
-    this.news = this.newsService.getNews(this.query);
-  }
+  constructor() { }
 }

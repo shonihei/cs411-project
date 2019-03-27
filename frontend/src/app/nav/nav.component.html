@@ -1,0 +1,14 @@
+<nav>
+  <div class="nav-container">
+    <form (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <input type="text"
+               [(ngModel)]="query"
+               name="query" 
+               placeholder="Query" 
+               autocomplete="off">
+      </div>
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+</nav>
