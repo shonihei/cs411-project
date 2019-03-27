@@ -8,7 +8,7 @@ export class Article {
 
   constructor(readonly latlong: LatLong) {
     this.geometry = new THREE.CircleGeometry(7, 32);
-    this.material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    this.material = new THREE.MeshBasicMaterial({ color: 0xf9a825 });
     this.material.opacity = 0.5;
     this.material.transparent = true;
     this.mesh = new THREE.Mesh(this.geometry, this.material);

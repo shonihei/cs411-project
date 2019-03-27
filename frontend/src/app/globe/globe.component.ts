@@ -1,4 +1,11 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  HostListener
+} from '@angular/core';
 import { TextureLoaderService } from '../services/texture-loader.service';
 import { Globe } from './renders/globe';
 import { Article } from './renders/article';
@@ -33,7 +40,7 @@ export class GlobeComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.textureLoaderService
-      .getTexture('../assets/img/earthDark.jpg')
+      .getTexture('../assets/img/earthBlue.jpg')
       .subscribe(texture => this.initializeRender(texture));
     this.renderEvents.events$
       .subscribe(e => this.processRenderEvent(e));
@@ -48,7 +55,8 @@ export class GlobeComponent implements OnInit, AfterViewInit {
       new Article({ lat: 40.7128, long: -74.0060 }),   // New York
       new Article({ lat: 35.6895, long: 139.69171 }),  // tokyo
       new Article({ lat: 34.69374, long: 135.50218 }), // osaka
-      new Article({ lat: 30.79186, long: -83.78989 }), // Boston
+      new Article({ lat: 42.3601, long: -71.0589 }), // Boston
+      new Article({ lat: 27.9506, long: -82.4572 }), // Tampa
       new Article({ lat: 47.60621, long: -122.33207 }), // seattle
       new Article({ lat: 34.05223, long: -118.24368 }), // LA
       new Article({ lat: 51.50853, long: -0.12574 }),  // London
@@ -85,5 +93,10 @@ export class GlobeComponent implements OnInit, AfterViewInit {
   public onMouseUp() {
     // mouse position of infinity indicates to globe to stop raycasting
     this.mouseEmitter.updateMouseCoord(new Vector2(Infinity, Infinity));
+  }
+
+  @HostListener('window:resize', ['$event'])
+  public onResize(e: Event) {
+    this.renderEvents.emitNewEvent({ type: EventType.Resize });
   }
 }

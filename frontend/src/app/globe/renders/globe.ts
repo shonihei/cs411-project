@@ -33,8 +33,22 @@ export class Globe {
       this.mouse.x = coord.x;
       this.mouse.y = coord.y;
     });
+    this.renderEvents.events$.subscribe((e) => {
+      if (e.type === EventType.Resize) {
+        this.onResize();
+      }
+    });
 
     this.animate = this.animate.bind(this);
+  }
+
+  private onResize() {
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = '100%';
+
+    this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+    this.camera.aspect = this.aspectRatio;
+    this.camera.updateProjectionMatrix();
   }
 
   public init() {
@@ -70,7 +84,6 @@ export class Globe {
 
   private createScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x000000);
     this.scene.add(this.mesh);
   }
 
@@ -129,7 +142,7 @@ export class Globe {
   }
 
   private addControls() {
-    this.controls = new OrbitControls(this.camera);
+    this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.rotateSpeed = 0.5;
     this.controls.enablePan = false;
     this.controls.minDistance = 400;
@@ -145,10 +158,12 @@ export class Globe {
   private startRendering() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
-      antialias: true
+      antialias: true,
+      alpha: true,
     });
     this.renderer.setPixelRatio(devicePixelRatio);
     this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+    this.renderer.setClearColor(0xffffff, 0);
 
     this.animate();
   }
