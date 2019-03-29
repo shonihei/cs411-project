@@ -1,0 +1,6 @@
+/.vscode
+
+# ignore python related files
+env
+.env
+__pycache__
