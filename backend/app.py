@@ -1,56 +1,31 @@
-from flask import Flask
+from flask import Flask, Response, json, request
+from flask_cors import CORS
 from newsapi import NewsApiClient
-newsapi = NewsApiClient(api_key='')
-everythingRequest = newsapi.get_everything(q='jews',
-                                      sources='bbc-news,the-verge',
-                                      #domains='bbc.co.uk,techcrunch.com',
-                                      #from_param='2017-12-01',
-                                      #to='2017-12-12',
-                                      language='en',
-                                      sort_by='relevancy',
-                                      page=2)
+from dotenv import load_dotenv
+import os
 
+#load environment variables
+APP_ROOT = os.path.dirname(__file__)
+dotenv_path = os.path.join(APP_ROOT, '.env')
+load_dotenv(dotenv_path)
+newsapi = NewsApiClient(api_key=os.getenv('NEWS_API_KEY'))
 
 app = Flask(__name__)
+CORS(app)
 
-
-@app.route('/')
+@app.route('/articles', methods=['GET'])
 def home():
-    everythingRequest = newsapi.get_everything(q='dogs',
-                                               #sources='bbc-news,the-verge',
-                                               # domains='bbc.co.uk,techcrunch.com',
-                                               # from_param='2017-12-01',
-                                               # to='2017-12-12',
-                                               language='en',
-                                               sort_by='relevancy',
-                                               page=2)
-    totalResults = everythingRequest['totalResults']
-    articles = everythingRequest['articles']
-    authors = []
-    titles = []
-    descriptions = []
-    urls = []
-    for article in articles:
-        authors += [article['author']]
-        titles += [article['title']]
-        descriptions += [article['description']]
-        urls += [article['url']]
-
-    s = ''
-    for i in range(len(authors)):
-        if authors[i] == None:
-            authors[i] = 'Author not found'
-        if titles[i] == None:
-            titles[i] = 'Title not found'
-        if descriptions[i] == None:
-            descriptions[i] = 'Description not found'
-        if urls[i] == None:
-            urls[i] = 'URL not found'
-        s += 'Title: ' + titles[i] + '\n'
-        s += 'Author: ' + authors[i] + '\n'
-        s += 'Description: ' + descriptions[i] + '\n'
-        s += 'Link: ' + urls[i] + '\n'
-    return s
+    news = newsapi.get_everything(
+        q=request.args.get('q'),
+        language='en',
+        sort_by='relevancy',
+        page=2
+    )
+    js = json.dumps(news)
+    if news['status'] == 'ok':
+        return Response(js, status=200, mimetype='application/json')
+    else:
+        return Response(js, status=500)
 
 if __name__ == '__main__':
     app.run()
