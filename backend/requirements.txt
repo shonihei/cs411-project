@@ -3,6 +3,7 @@ certifi==2019.3.9
 chardet==3.0.4
 Click==7.0
 Flask==1.0.2
+Flask-Cors==3.0.7
 idna==2.5
 isort==4.3.16
 itsdangerous==1.1.0
