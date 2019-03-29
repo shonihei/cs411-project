@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NewsService } from '../news.service';
+import { NewsService } from '../services/news.service';
 
 @Component({
   selector: 'app-nav',
@@ -8,19 +8,29 @@ import { NewsService } from '../news.service';
 })
 export class NavComponent implements OnInit {
   query = '';
-  news: string[] = [];
+  res: {};
+  hasRes = false;
 
-  constructor(private newsService: NewsService) { }
+  constructor(private news: NewsService) { }
 
   ngOnInit() { }
 
   onSubmit() {
     console.log(`queried for ${this.query}`);
     this.getNews();
-    console.log(`res: ${this.news}`);
   }
 
   getNews(): void {
-    this.news = this.newsService.getNews(this.query);
+    this.news.getNews(this.query).subscribe((res) => {
+      this.res = res;
+      this.hasRes = true;
+      console.log(this.res);
+    });
+  }
+
+  public onDumpClose() {
+    this.res = {};
+    this.hasRes = false;
+    this.query = '';
   }
 }

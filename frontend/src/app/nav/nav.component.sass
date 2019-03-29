@@ -20,27 +20,91 @@ nav
 form
   display: flex
 
-input
-  padding: 12px 16px
-  border: 1px solid rgba(0, 0, 0, 0.2)
-  border-radius: 4px
-  margin-right: 20px
-  transition: all 0.2s ease-out
+  input
+    padding: 12px 16px
+    border: 1px solid rgba(0, 0, 0, 0.2)
+    border-radius: 4px
+    margin-right: 20px
+    transition: all 0.2s ease-out
 
-input:focus
-  outline: none
-  border-color: $primary-color
+  input:focus
+    outline: none
+    border-color: $primary-color
 
-button
-  padding: 12px 20px
-  color: $primary-color
-  background-color: transparent
-  border: 1px solid $primary-color
-  border-radius: 4px
-  cursor: pointer
-  transition: all 0.2s ease-out
+  button
+    padding: 12px 20px
+    color: $primary-color
+    background-color: transparent
+    border: 1px solid $primary-color
+    border-radius: 4px
+    cursor: pointer
+    transition: all 0.2s ease-out
 
-button:hover
-  color: #fff
-  background-color: $primary-color
-  border-color: #fff
+  button:hover
+    color: #fff
+    background-color: $primary-color
+    border-color: #fff
+
+.news-dump
+  left: calc(50% - 300px)
+  position: absolute
+  top: 100px
+  width: 600px
+  background-color: #fff
+  box-shadow: 0 5px 40px -10px rgba(0, 0, 0, 0.4)
+  border-radius: 6px
+
+  .dump-header
+    display: flex
+    align-items: center
+
+    .dump-heading
+      font-size: 25px
+      padding: 0 20px
+      font-weight: 400
+    .close-btn
+      outline: none
+      margin-left: auto
+      margin-right: 20px
+      font-size: 30px
+      background-color: transparent
+      border: none
+      cursor: pointer
+
+.articles
+  max-height: 600px
+  overflow-y: auto
+  
+  .article-container
+    padding: 10px 20px
+    border-top: 1px solid #e6e6e6
+  
+    .article-header
+      .title
+        margin: 0
+        font-weight: 500
+        
+      .source
+        margin: 0
+        margin-top: 4px
+        color: #717171
+        font-weight: 300
+      
+    .article-content
+      p
+        line-height: 24px
+        color: #333333
+      .more-container
+        display: flex
+        a
+          margin-left: auto
+          padding: 10px 20px
+          background-color: #fff
+          text-decoration: none
+          color: $primary-color
+          border: 1px solid $primary-color
+          border-radius: 6px
+          transition: all 0.2s ease-out
+          &:hover
+            color: #fff
+            background-color: $primary-color
