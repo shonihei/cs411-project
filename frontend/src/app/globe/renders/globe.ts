@@ -22,6 +22,7 @@ export class Globe {
   public farClippingPane = 10000;
 
   private mouse: THREE.Vector2;
+  private articles: Article[] = [];
 
   constructor(readonly RADIUS: number, readonly SEGMENTS: number, readonly RINGS: number,
               readonly texture: THREE.Texture, readonly canvas: HTMLCanvasElement,
@@ -67,6 +68,7 @@ export class Globe {
 
     const sphereGeometry = new THREE.SphereGeometry(this.RADIUS, this.SEGMENTS, this.RINGS);
     const material = new THREE.MeshBasicMaterial({ map: this.texture });
+    // const material = new THREE.MeshBasicMaterial({ wireframe: true, color: 0xF3A2B0 });
     this.mesh = new THREE.Mesh(sphereGeometry, material);
     this.mesh.name = 'globe';
   }
@@ -92,9 +94,10 @@ export class Globe {
     const cartesianCoord = this.convertToCartesian(latlongRad);
     article.setPosition(cartesianCoord);
     article.lookAwayFrom(this.mesh);
-    this.scene.add(article.mesh);
+    article.addToScene(this.scene);
 
-    this.animationGroup.add(article.mesh);
+    article.addToAnimationGroup(this.animationGroup);
+    this.articles.push(article);
   }
 
   /**
@@ -172,6 +175,12 @@ export class Globe {
     return this.mouse.x !== Infinity && this.mouse.y !== Infinity;
   }
 
+  private updateArticleRotation() {
+    for (const article of this.articles) {
+      article.lookAt(this.camera);
+    }
+  }
+
   private animate() {
     requestAnimationFrame(this.animate);
     this.render();
@@ -179,7 +188,9 @@ export class Globe {
 
   private render() {
     this.controls.update();
+    this.updateArticleRotation();
 
+    // update animation key frame
     const delta = this.clock.getDelta();
     if (this.animationMixer) {
       this.animationMixer.update(delta);
