@@ -40,7 +40,7 @@ export class GlobeComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.textureLoaderService
-      .getTexture('../assets/img/earthBlue.jpg')
+      .getTexture('../assets/img/earthBlueHD.png')
       .subscribe(texture => this.initializeRender(texture));
     this.renderEvents.events$
       .subscribe(e => this.processRenderEvent(e));
