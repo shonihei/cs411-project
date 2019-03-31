@@ -68,7 +68,6 @@ export class Globe {
 
     const sphereGeometry = new THREE.SphereGeometry(this.RADIUS, this.SEGMENTS, this.RINGS);
     const material = new THREE.MeshBasicMaterial({ map: this.texture });
-    // const material = new THREE.MeshBasicMaterial({ wireframe: true, color: 0xF3A2B0 });
     this.mesh = new THREE.Mesh(sphereGeometry, material);
     this.mesh.name = 'globe';
   }
@@ -90,14 +89,16 @@ export class Globe {
   }
 
   public addArticle(article: Article) {
-    const latlongRad = article.latlongRad;
-    const cartesianCoord = this.convertToCartesian(latlongRad);
-    article.setPosition(cartesianCoord);
-    article.lookAwayFrom(this.mesh);
-    article.addToScene(this.scene);
+    article.readySignal$.subscribe(() => {
+      const latlongRad = article.latlongRad;
+      const cartesianCoord = this.convertToCartesian(latlongRad);
+      article.setPosition(cartesianCoord);
+      article.lookAwayFrom(this.mesh);
+      article.addToScene(this.scene);
 
-    article.addToAnimationGroup(this.animationGroup);
-    this.articles.push(article);
+      article.addToAnimationGroup(this.animationGroup);
+      this.articles.push(article);
+    });
   }
 
   /**
