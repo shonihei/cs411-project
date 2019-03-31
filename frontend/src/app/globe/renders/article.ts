@@ -15,30 +15,6 @@ export interface ArticleInfo {
 }
 
 export class Article {
-  public readySignal$ = new Subject();
-
-  private meshGroup: THREE.Group;
-  public pulseMesh: THREE.Mesh;
-  private boxMesh: THREE.Mesh;
-  private info: ArticleInfo;
-  private image: HTMLImageElement;
-
-  private textureWidth = 256;
-  private textureHeight = 128;
-  // length of article description in each line
-  private descrLineLength = 180;
-  private descrnumLines = 4;
-  // length of article title
-  private articleLineLength = 230;
-
-  private articleDescription =
-  'Lorem ipsum dolor sit amet, consectetur adipiscing elit. \
-  Curabitur eleifend bibendum molestie. Suspendisse et luctus \
-  dolor. Nam ut ante in quam euismod ultrices. Suspendisse molestie \
-  ipsum ut neque vulputate, ultrices lacinia turpis interdum. Aliquam \
-  vitae pulvinar elit. Curabitur dignissim elementum aliquet. Curabitur \
-  tincidunt purus et sem luctus tincidunt. Aliquam fermentum.';
-  private articleTitle = 'Something about bitcoins and machine learning';
 
   constructor(readonly latlong: LatLong) {
     this.meshGroup = new THREE.Group();
@@ -52,6 +28,38 @@ export class Article {
       this.notifyReady();
     });
   }
+
+  public get latlongRad(): LatLong {
+    return {
+      lat: this.latlong.lat * (Math.PI / 180),
+      long: -this.latlong.long * (Math.PI / 180)
+    };
+  }
+  public readySignal$ = new Subject();
+
+  private meshGroup: THREE.Group;
+  public pulseMesh: THREE.Mesh;
+  private boxMesh: THREE.Mesh;
+  private info: ArticleInfo;
+  private image: HTMLImageElement;
+
+  private textureWidth = 256;
+  private textureHeight = 128;
+  // length of article description in each line
+  private descrLineLength = 180;
+  private descrnumLines = 2;
+  // length of article title
+  private articleLineLength = 180;
+
+  private articleDescription =
+  'Lorem ipsum dolor sit amet, consectetur adipiscing elit. \
+  Curabitur eleifend bibendum molestie. Suspendisse et luctus \
+  dolor. Nam ut ante in quam euismod ultrices. Suspendisse molestie \
+  ipsum ut neque vulputate, ultrices lacinia turpis interdum. Aliquam \
+  vitae pulvinar elit. Curabitur dignissim elementum aliquet. Curabitur \
+  tincidunt purus et sem luctus tincidunt. Aliquam fermentum.';
+  private articleTitle = 'Something about bitcoins and machine learning';
+  private source = 'The Reddit Times';
 
   /**
    * Notifies to subscribers that the article is ready to be loaded
@@ -84,14 +92,15 @@ export class Article {
     context.fillRect(0, 0, this.textureWidth, this.textureHeight);
     this.writeTitle(context);
     this.writeDescription(context);
+    this.writeSource(context);
 
-    context.drawImage(this.image, 0, 0, this.image.width, this.image.height, 200, 33, 50, 50);
+    context.drawImage(this.image, 0, 0, this.image.width, this.image.height, 198, 10, 50, 50);
 
     const texture = new THREE.Texture(canvas);
     texture.needsUpdate = true;
     texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
     texture.repeat.set(0.02, 0.044);   // magic number: don't ask me how i got it
-    texture.offset.set(-0.0005, 0.13); // magic number: don't ask me how i got it
+    texture.offset.set(-0.0005, 0.35); // magic number: don't ask me how i got it
     return texture;
   }
 
@@ -104,9 +113,9 @@ export class Article {
     context.fillStyle = '#000000';
     const lineBreaks = this.calculateLineBreaks(this.articleTitle, this.articleLineLength, context);
     if (lineBreaks.length === 1) {
-      context.fillText(lineBreaks[0], 10, 20);
+      context.fillText(lineBreaks[0], 8, 20);
     } else {
-      context.fillText(`${lineBreaks[0]}...`, 10, 20);
+      context.fillText(`${lineBreaks[0]}...`, 8, 20);
     }
   }
 
@@ -124,17 +133,26 @@ export class Article {
       startAt += 15;
     }
     if (lineBreaks.length > this.descrnumLines) {
-      context.fillText(`${lineBreaks[this.descrnumLines - 1]}...`, 10, startAt);
+      context.fillText(`${lineBreaks[this.descrnumLines - 1]}...`, 8, startAt);
     } else {
-      context.fillText(lineBreaks[this.descrnumLines - 1], 10, startAt);
+      context.fillText(lineBreaks[this.descrnumLines - 1], 8, startAt);
     }
   }
 
   /**
+   * Writes source of the article in cavas text
+   * @param context canvas context
+   */
+  private writeSource(context: CanvasRenderingContext2D) {
+    context.font = '8px Roboto';
+    context.fillStyle = '#545454';
+    context.fillText(this.source, 10, 72);
+  }
+  /**
    * Creates 2D shape container where article content will be rendered to.
    */
   private createArticleBox() {
-    const shape = this.makeRectangle(0, 0, 50, 20, 1.5);
+    const shape = this.makeRectangle(0, 0, 50, 15, 1.5);
     const geometry = new THREE.ShapeGeometry(shape);
     geometry.center();
 
@@ -143,6 +161,7 @@ export class Article {
     const material = new THREE.MeshBasicMaterial({ color: 0xffffff, map: texture });
 
     this.boxMesh = new THREE.Mesh(geometry, material);
+    this.boxMesh.name = 'article-box';
     this.translateArticleBox();
 
     // add border line to article box
@@ -226,13 +245,6 @@ export class Article {
     this.meshGroup.add(line);
   }
 
-  public get latlongRad(): LatLong {
-    return {
-      lat: this.latlong.lat * (Math.PI / 180),
-      long: -this.latlong.long * (Math.PI / 180)
-    };
-  }
-
   public setPosition(pos: THREE.Vector3) {
     this.meshGroup.position.set(pos.x, pos.y, pos.z);
   }
@@ -279,5 +291,9 @@ export class Article {
       output.push(buffer.trim());
     }
     return output;
+  }
+
+  public get meshId(): number {
+    return this.meshGroup.id;
   }
 }
