@@ -78,6 +78,7 @@ export class GlobeComponent implements OnInit, AfterViewInit {
     switch (e.type) {
       case EventType.Click: {
         console.log(`clicked on ${e.target.name}`);
+        console.log(e.payload as Article);
         break;
       }
       case EventType.Null: {

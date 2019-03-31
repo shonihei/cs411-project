@@ -12,6 +12,7 @@ export enum EventType {
 export interface RenderEvent {
   type: EventType;
   target?: THREE.Object3D;
+  payload?: any;
 }
 
 @Injectable({
