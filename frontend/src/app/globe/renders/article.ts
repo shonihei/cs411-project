@@ -51,15 +51,15 @@ export class Article {
   // length of article title
   private articleLineLength = 180;
 
-  private articleDescription =
+  articleDescription =
   'Lorem ipsum dolor sit amet, consectetur adipiscing elit. \
   Curabitur eleifend bibendum molestie. Suspendisse et luctus \
   dolor. Nam ut ante in quam euismod ultrices. Suspendisse molestie \
   ipsum ut neque vulputate, ultrices lacinia turpis interdum. Aliquam \
   vitae pulvinar elit. Curabitur dignissim elementum aliquet. Curabitur \
   tincidunt purus et sem luctus tincidunt. Aliquam fermentum.';
-  private articleTitle = 'Something about bitcoins and machine learning';
-  private source = 'The Reddit Times';
+  articleTitle = 'Something about bitcoins and machine learning';
+  source = 'The Reddit Times';
 
   /**
    * Notifies to subscribers that the article is ready to be loaded

@@ -7,12 +7,14 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { GlobeComponent } from './globe/globe.component';
 import { NavComponent } from './nav/nav.component';
+import { ArticleViewerComponent } from './article-viewer/article-viewer.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     GlobeComponent,
-    NavComponent
+    NavComponent,
+    ArticleViewerComponent
   ],
   imports: [
     BrowserModule,

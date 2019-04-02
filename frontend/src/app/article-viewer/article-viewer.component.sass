@@ -1,0 +1,224 @@
+@import "../../variables.sass"
+
+@keyframes fadeIn
+  0%
+    opacity: 0
+    transform: translateY(-10px)
+  100%
+    opacity: 1
+    transform: translateY(0)
+
+@keyframes fadeOut
+  0%
+    opacity: 1
+    transform: translateY(0)
+  100%
+    opacity: 0
+    transform: translateY(-10px)
+
+@keyframes tintFadeIn
+  0%
+    opacity: 0
+  100%
+    opacity: 1
+
+@keyframes tintFadeOut
+  0%
+    opacity: 1
+  100%
+    opacity: 0
+
+\:host
+  top: 80px
+  left: 0
+  bottom: 0
+  right: 0
+  position: absolute
+  display: flex
+  flex-direction: column
+  align-items: center
+  padding: 60px 20px
+  visibility: hidden
+  
+  &.hidden
+    visibility: hidden
+    transition: visibility 0.3s 0.3s
+  
+  &.shown
+    visibility: visible
+
+  h4, h6
+    margin: 0
+
+  .tint
+    top: 0
+    left: 0
+    right: 0
+    bottom: 0
+    background-color: rgba(0, 0, 0, 0.8)
+    position: absolute
+    opacity: 0
+
+  &.shown .tint
+    animation: tintFadeIn 0.3s ease-out forwards
+
+  &.hidden .tint
+    animation: tintFadeOut 0.3s ease-out forwards
+
+  &.shown .viewer-container
+    animation: fadeIn 0.2s ease-out forwards
+  
+  &.hidden .viewer-container
+    animation: fadeOut 0.2s ease-out forwards
+
+  .viewer-container
+    max-height: 100%
+    max-width: 600px
+    background-color: #fff
+    border-radius: 6px
+    box-shadow: 0 5px 40px -10px rgba(0, 0, 0, 0.4)
+    padding: 20px
+    box-sizing: border-box
+    margin-bottom: 20px
+    flex-shrink: 0
+    opacity: 0
+    position: relative
+
+    .close-btn
+      position: absolute
+      right: -60px
+      top: 0
+      height: 40px
+      width: 40px
+      border: 2px solid #fff
+      background-color: #ffffff
+      border-radius: 20px
+      outline: none
+      transition: border-color 0.2s ease-out
+      cursor: pointer
+
+      &:before, &:after
+        content: ''
+        position: absolute
+        height: 15px
+        width: 2px
+        background-color: rgba(0, 0, 0, 1)
+        transform: rotateZ(45deg)
+        top: 10px
+        left: 17px
+      
+      &:after
+        transform: rotateZ(-45deg)
+
+      &:hover
+        border-color: $primary-color
+
+    .header
+      margin-bottom: 8px
+
+      .source
+        color: rgba(0, 0, 0, 0.6)
+        font-size: 16px
+        margin-bottom: 8px
+      
+      .title
+        color: rgba(0, 0, 0, 0.9)
+        font-size: 20px
+        margin-bottom: 6px
+        line-height: 26px
+      
+      .author
+        color: rgba(0, 0, 0, 0.9)
+        font-size: 16px
+        font-weight: 300
+    
+    .separator
+      background-color: $primary-color
+      height: 2px
+      width: 80%
+      display: block
+      opacity: 0.5
+      margin-bottom: 8px
+
+    .content
+      .description
+        font-size: 16px
+        line-height: 22px
+        margin: 0
+        color: rgba(0, 0, 0, 0.7)
+        margin-bottom: 20px
+      
+      .preview
+        line-height: 22px
+        margin: 0
+      
+      .read-more-container
+        display: flex
+
+        .read-more
+          padding: 10px 20px
+          border: 1px solid #ff4f4f
+          display: inline-block
+          text-decoration: none
+          color: #ff4f4f
+          border-radius: 6px
+          margin-left: auto
+          transition: all 0.2s ease-out
+
+          &:hover
+            background-color: #ff4f4f
+            color: #ffffff
+            
+  &.shown .related-articles
+    animation: fadeIn 0.3s 0.1s ease-out forwards
+
+  .related-articles
+    max-width: 600px
+    background-color: #fff
+    border-radius: 6px
+    box-shadow: 0 5px 40px -10px rgba(0, 0, 0, 0.4)
+    padding: 20px
+    box-sizing: border-box
+    overflow-y: auto
+    opacity: 0
+
+    .header
+      margin: 0
+      font-size: 24px
+      font-weight: 300
+      margin-bottom: 16px
+    
+    .articles
+      .article
+        padding: 10px
+        border: 1px solid rgba(0, 0, 0, 0.4)
+        border-radius: 6px
+        margin-bottom: 20px
+        
+        .container
+          display: flex
+
+          .content
+            flex-basis: 70%
+            flex-shrink: 0
+            flex-grow: 0
+            margin-right: 8px
+
+            .title
+              font-size: 16px
+              line-height: 20px
+              margin-bottom: 8px
+            
+            .description
+              margin: 0
+              color: rgba(0, 0, 0, 0.6)
+          
+          .article-img
+            flex-grow: 0
+            border-radius: 6px
+            overflow: hidden
+
+            img
+              height: 100%
+              width: 100%
+              object-fit: cover

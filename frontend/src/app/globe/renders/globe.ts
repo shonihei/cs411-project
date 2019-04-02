@@ -135,8 +135,8 @@ export class Globe {
 
     const opacityKF =
       new THREE.NumberKeyframeTrack('.material.opacity',
-                                    [0, 0.1, 0.2, 0.3, 0.4], [0, 0.5, 1, 0.5, 0]);
-    const clip = new THREE.AnimationClip('default', 0.5, [opacityKF]);
+                                    [0, 0.1, 0.2], [0, 0.7, 0]);
+    const clip = new THREE.AnimationClip('default', 0.3, [opacityKF]);
     this.selectorAnimationMixer = new THREE.AnimationMixer(this.selector);
     this.selectorAnimationMixer.addEventListener('finished', (e) => {
       this.selector.visible = false;

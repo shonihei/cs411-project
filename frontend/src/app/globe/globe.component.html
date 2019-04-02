@@ -1,2 +1,5 @@
 <canvas #canvas (mousedown)="onMouseDown($event)"
                 (mouseup)="onMouseUp()"></canvas>
+<app-article-viewer [ngClass]="{'hidden': !hasSelectedArticle, 'shown': hasSelectedArticle}"
+                    [article]="selectedArticle"
+                    [resetSelection]="resetSelection"></app-article-viewer>

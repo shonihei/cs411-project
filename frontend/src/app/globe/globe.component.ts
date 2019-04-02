@@ -12,6 +12,7 @@ import { Article } from './renders/article';
 import { MouseEmitterService } from '../services/mouse-emitter.service';
 import { RenderEventsService, EventType, RenderEvent } from '../services/render-events.service';
 import { Vector2, Texture } from 'three';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-globe',
@@ -28,6 +29,12 @@ export class GlobeComponent implements OnInit, AfterViewInit {
   public nearClippingPane = 0.1;
   public farClippingPane = 10000;
 
+  private hasSelectedArticle = false;
+  private selectedArticle: Article;
+
+  private resetSelection = new Subject<void>();
+  private resetSelection$ = this.resetSelection.asObservable();
+
   private get canvas(): HTMLCanvasElement {
     return this.canvasRef.nativeElement;
   }
@@ -36,7 +43,13 @@ export class GlobeComponent implements OnInit, AfterViewInit {
               private mouseEmitter: MouseEmitterService,
               private renderEvents: RenderEventsService) { }
 
-  ngOnInit() { }
+  ngOnInit() {
+    this.resetSelection$.subscribe(() => {
+      this.hasSelectedArticle = false;
+      this.selectedArticle = null;
+      this.mouseEmitter.updateMouseCoord(new Vector2(Infinity, Infinity));
+    });
+  }
 
   ngAfterViewInit() {
     this.textureLoaderService
@@ -77,8 +90,8 @@ export class GlobeComponent implements OnInit, AfterViewInit {
   private processRenderEvent(e: RenderEvent) {
     switch (e.type) {
       case EventType.Click: {
-        console.log(`clicked on ${e.target.name}`);
-        console.log(e.payload as Article);
+        this.hasSelectedArticle = true;
+        this.selectedArticle = e.payload;
         break;
       }
       case EventType.Null: {
