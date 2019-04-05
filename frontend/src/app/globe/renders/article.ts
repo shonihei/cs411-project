@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { LatLong } from './latlong';
+import { LatLong } from '../../shared/latlong';
 import { Subject } from 'rxjs';
+import { Node } from '../../shared/location-graph';
 
-export interface ArticleInfo {
+export interface ArticleInfo extends Node {
   source?: string;
   author?: string;
   title: string;
@@ -11,16 +12,37 @@ export interface ArticleInfo {
   urlToImage?: string;
   publishedAt?: string;
   content?: string;
-  latlong: LatLong;
 }
 
-export class Article {
+export class Article implements ArticleInfo {
+  readonly id: string;
+  readonly latlong: LatLong;
+  readonly source?: string;
+  readonly author?: string;
+  readonly title: string;
+  readonly description?: string;
+  readonly url: string;
+  readonly urlToImage?: string;
+  readonly publishedAt?: string;
+  readonly content?: string;
 
-  constructor(readonly latlong: LatLong) {
+  constructor(articleInfo: ArticleInfo) {
+    // this is very dump, fix later
+    this.latlong = articleInfo.latlong;
+    this.id = articleInfo.id;
+    this.source = articleInfo.source;
+    this.author = articleInfo.author;
+    this.title = articleInfo.title;
+    this.description = articleInfo.description;
+    this.url = articleInfo.url;
+    this.urlToImage = articleInfo.urlToImage;
+    this.publishedAt = articleInfo.publishedAt;
+    this.content = articleInfo.content;
+
     this.meshGroup = new THREE.Group();
     this.meshGroup.name = 'article';
 
-    this.loadImage('../../assets/img/shiba.jpg').subscribe((img) => {
+    this.loadImage(this.urlToImage).subscribe((img) => {
       this.image = img;
       this.createPulse();
       this.createArticleBox();
@@ -29,18 +51,11 @@ export class Article {
     });
   }
 
-  public get latlongRad(): LatLong {
-    return {
-      lat: this.latlong.lat * (Math.PI / 180),
-      long: -this.latlong.long * (Math.PI / 180)
-    };
-  }
   public readySignal$ = new Subject();
 
   private meshGroup: THREE.Group;
   public pulseMesh: THREE.Mesh;
   private boxMesh: THREE.Mesh;
-  private info: ArticleInfo;
   private image: HTMLImageElement;
 
   private textureWidth = 256;
@@ -50,16 +65,6 @@ export class Article {
   private descrnumLines = 2;
   // length of article title
   private articleLineLength = 180;
-
-  articleDescription =
-  'Lorem ipsum dolor sit amet, consectetur adipiscing elit. \
-  Curabitur eleifend bibendum molestie. Suspendisse et luctus \
-  dolor. Nam ut ante in quam euismod ultrices. Suspendisse molestie \
-  ipsum ut neque vulputate, ultrices lacinia turpis interdum. Aliquam \
-  vitae pulvinar elit. Curabitur dignissim elementum aliquet. Curabitur \
-  tincidunt purus et sem luctus tincidunt. Aliquam fermentum.';
-  articleTitle = 'Something about bitcoins and machine learning';
-  source = 'The Reddit Times';
 
   /**
    * Notifies to subscribers that the article is ready to be loaded
@@ -111,7 +116,8 @@ export class Article {
   private writeTitle(context: CanvasRenderingContext2D) {
     context.font = '300 14px Roboto';
     context.fillStyle = '#000000';
-    const lineBreaks = this.calculateLineBreaks(this.articleTitle, this.articleLineLength, context);
+    const lineBreaks =
+      this.calculateLineBreaks(this.title, this.articleLineLength, context);
     if (lineBreaks.length === 1) {
       context.fillText(lineBreaks[0], 8, 20);
     } else {
@@ -125,7 +131,7 @@ export class Article {
   private writeDescription(context: CanvasRenderingContext2D) {
     context.font = '10px Roboto';
     context.fillStyle = '#545454';
-    const lineBreaks = this.calculateLineBreaks(this.articleDescription,
+    const lineBreaks = this.calculateLineBreaks(this.description,
                                                 this.descrLineLength, context);
     let startAt = 40;
     for (const line of lineBreaks.slice(0, this.descrnumLines - 1)) {
