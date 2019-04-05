@@ -1,35 +1,33 @@
 <div class="tint" (click)="closeViewer()"></div>
-<div class="viewer-container">
+<div *ngIf="mainArticle" class="viewer-container">
   <button class="close-btn" (click)="closeViewer()"></button>
   <div class="main-article">
     <div class="header">
-      <h6 class="source">moderndog</h6>
-      <h4 class="title">
-        The Shiba Inu: The foxy dog with plenty of moxie. Great zoomies and a loyal friend
-      </h4>
-      <h6 class="author">By Kelly Caldwell</h6>
+      <h6 class="source">{{ mainArticle.source }}</h6>
+      <h4 class="title">{{ mainArticle.title }}</h4>
+      <h6 class="author">By {{ mainArticle.author }}</h6>
     </div>
     <span class="separator"></span>
     <div class="content">
-      <p class="description">Blockchain for Business 2019: A user-friendly introduction to blockchain technology and its business applications</p>
-      <p class="preview">China's manufacturing PMI surged overnight back above 50, "proving" that all that stimulus hype has finally fixed the Chinese economy - sparking stock and commodity buying worldwide as a reflation-fest sent bond yields reeling higher.<br>There's just one thing.…</p>
+      <p class="description">{{ mainArticle.description }}</p>
+      <p class="preview">{{ mainArticle.content }}</p>
       <div class="read-more-container">
         <a href="https://moderndogmagazine.com/breeds/shiba-inu-0" target="_blank" class="read-more">Read More</a>
       </div>
     </div>
   </div>
 </div>
-<div class="related-articles">
+<div *ngIf="nearArticles.length" class="related-articles">
   <h5 class="header">Related Articles</h5>
   <div class="articles">
-    <div *ngFor="let i of [1, 2, 3, 4]" class="article">
+    <div *ngFor="let article of nearArticles" class="article">
       <div class="container">
         <div class="content">
-          <h6 class="title">The Shiba Inu: The foxy dog with plenty of moxie. Great zoomies and a loyal friend</h6>
-          <p class="description">Blockchain for Business 2019: A user-friendly introduction to blockchain technology and its business applications</p>
+          <h6 class="title">{{ article.title }}</h6>
+          <p class="description">{{ article.description }}</p>
         </div>
         <div class="article-img">
-          <img src="../../assets/img/shiba.jpg" alt="">
+          <img src="{{ article.urlToImage }}" alt="">
         </div>
       </div>
     </div>

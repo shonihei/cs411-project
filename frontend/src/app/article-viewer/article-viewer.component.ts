@@ -11,8 +11,9 @@ export class ArticleViewerComponent implements OnInit {
 
   constructor() { }
 
-  @Input() article: Article;
+  @Input() mainArticle: Article;
   @Input() resetSelection: Subject<void>;
+  @Input() nearArticles: Article[];
 
   ngOnInit() {
   }
