@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { NewsService } from '../services/news.service';
+import { AuthService, FacebookLoginProvider, SocialUser } from 'angularx-social-login';
+import { FacebookService } from '../services/facebook.service';
 
 @Component({
   selector: 'app-nav',
@@ -10,27 +11,34 @@ export class NavComponent implements OnInit {
   query = '';
   res: {};
   hasRes = false;
+  private user: SocialUser;
+  private isLoggedIn: boolean;
 
-  constructor(private news: NewsService) { }
+  constructor(private authService: AuthService, private facebook: FacebookService) { }
 
-  ngOnInit() { }
-
-  onSubmit() {
-    console.log(`queried for ${this.query}`);
-    this.getNews();
-  }
-
-  getNews(): void {
-    this.news.getNews(this.query).subscribe((res) => {
-      this.res = res;
-      this.hasRes = true;
-      console.log(this.res);
+  ngOnInit() {
+    this.authService.authState.subscribe((user) => {
+      this.user = user;
+      this.isLoggedIn = (user != null);
+      if (this.isLoggedIn) {
+        console.log(`currently signed in: ${this.user.name}`);
+        this.facebook.getHometown().subscribe((res) => {
+          console.log('hometown:');
+          console.log(res);
+        });
+        this.facebook.getPlaces().subscribe((res) => {
+          console.log('tagged places:');
+          console.log(res);
+        });
+      }
     });
   }
 
-  public onDumpClose() {
-    this.res = {};
-    this.hasRes = false;
-    this.query = '';
+  signIn() {
+    this.authService.signIn(FacebookLoginProvider.PROVIDER_ID);
+  }
+
+  signOut() {
+    this.authService.signOut();
   }
 }
