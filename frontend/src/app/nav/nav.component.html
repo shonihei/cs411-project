@@ -1,34 +1,14 @@
 <nav>
   <div class="nav-container">
-    <form (ngSubmit)="onSubmit()">
-      <div class="form-group">
-        <input type="text"
-               [(ngModel)]="query"
-               name="query" 
-               placeholder="Query" 
-               autocomplete="off">
-      </div>
-      <button type="submit">Submit</button>
-    </form>
-  </div>
-  <div *ngIf="hasRes" class="news-dump">
-    <div class="dump-header">
-      <h4 class="dump-heading">Articles for <i>"{{query}}"</i></h4>
-      <button class="close-btn" (click)="onDumpClose()">&times;</button>
+    <div class="logged-in-state" *ngIf="isLoggedIn; else anonymous">
+      <span class="greetings">Hello, <b>{{user.firstName}}</b></span>
+      <span class="separator"></span>
+      <button class="logout-btn" (click)="signOut()">Logout</button>
     </div>
-    <div class="articles">
-      <div class="article-container" *ngFor="let article of res.articles">
-        <div class="article-header">
-          <h3 class="title">{{article.title}}</h3>
-          <h4 class="source">{{article.source.name}}</h4>
-        </div>
-        <div class="article-content">
-          <p>{{article.content}}</p>
-          <div class="more-container">
-            <a href="{{article.url}}" target="_blank" rel="noopener noreferrer">Read More</a>
-          </div>
-        </div>
+    <ng-template #anonymous>
+      <div class="login-btn" (click)="signIn()">
+        <img src="../../assets/img/facebook-signin-btn.png" alt="">
       </div>
-    </div>
+    </ng-template>
   </div>
 </nav>

@@ -9,6 +9,29 @@ import { GlobeComponent } from './globe/globe.component';
 import { NavComponent } from './nav/nav.component';
 import { ArticleViewerComponent } from './article-viewer/article-viewer.component';
 
+import {
+  SocialLoginModule,
+  AuthServiceConfig,
+  FacebookLoginProvider,
+  LoginOpt
+} from 'angularx-social-login';
+
+const loginOptions: LoginOpt = {
+  scope: 'email,user_tagged_places,user_hometown,user_location',
+  return_scopes: true,
+};
+
+const config = new AuthServiceConfig([
+  {
+    id: FacebookLoginProvider.PROVIDER_ID,
+    provider: new FacebookLoginProvider('823476348011966', loginOptions)
+  }
+]);
+
+export function provideConfig() {
+  return config;
+}
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -21,8 +44,14 @@ import { ArticleViewerComponent } from './article-viewer/article-viewer.componen
     HttpClientModule,
     AppRoutingModule,
     FormsModule,
+    SocialLoginModule,
   ],
-  providers: [],
+  providers: [
+    {
+      provide: AuthServiceConfig,
+      useFactory: provideConfig,
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
