@@ -1,4 +1,4 @@
-import { LatLong } from './latlong';
+import { LatLong } from './locations';
 
 export interface Node {
   id: string;
@@ -25,6 +25,22 @@ export class LocationGraph {
 
   getEdges(node: Node): Edge[] {
     return this.adjList.get(node);
+  }
+
+  removeNodesOfType(className: string) {
+    // remove nodes
+    this.nodes = this.nodes.filter((node) => {
+      return node.constructor.name !== className;
+    });
+    for (const node of Array.from(this.adjList.keys())) {
+      if (node.constructor.name === className) {
+        this.adjList.delete(node);
+      } else {
+        this.adjList.set(node, this.adjList.get(node).filter((edge) => {
+          return edge.dest.constructor.name !== className;
+        }));
+      }
+    }
   }
 
   private addEdges(src: Node) {

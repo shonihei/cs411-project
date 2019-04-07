@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService, FacebookLoginProvider, SocialUser } from 'angularx-social-login';
-import { FacebookService } from '../services/facebook.service';
 
 @Component({
   selector: 'app-nav',
@@ -14,23 +13,12 @@ export class NavComponent implements OnInit {
   private user: SocialUser;
   private isLoggedIn: boolean;
 
-  constructor(private authService: AuthService, private facebook: FacebookService) { }
+  constructor(private authService: AuthService) { }
 
   ngOnInit() {
     this.authService.authState.subscribe((user) => {
       this.user = user;
       this.isLoggedIn = (user != null);
-      if (this.isLoggedIn) {
-        console.log(`currently signed in: ${this.user.name}`);
-        this.facebook.getHometown().subscribe((res) => {
-          console.log('hometown:');
-          console.log(res);
-        });
-        this.facebook.getPlaces().subscribe((res) => {
-          console.log('tagged places:');
-          console.log(res);
-        });
-      }
     });
   }
 

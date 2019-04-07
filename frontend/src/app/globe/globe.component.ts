@@ -3,7 +3,6 @@ import {
   OnInit,
   ViewChild,
   ElementRef,
-  AfterViewInit,
   HostListener
 } from '@angular/core';
 import { TextureLoaderService } from '../services/texture-loader.service';
@@ -12,16 +11,18 @@ import { Article, ArticleInfo } from './renders/article';
 import { MouseEmitterService } from '../services/mouse-emitter.service';
 import { RenderEventsService, EventType, RenderEvent } from '../services/render-events.service';
 import { Vector2, Texture } from 'three';
-import { Subject } from 'rxjs';
-import { LocationGraph, Node } from '../shared/location-graph';
-import { LatLong } from '../shared/latlong';
+import { Subject, ReplaySubject } from 'rxjs';
+import { LocationGraph } from '../shared/location-graph';
+import { LatLong, PlaceGN } from '../shared/locations';
+import { AuthService } from 'angularx-social-login';
+import { FacebookService } from '../services/facebook.service';
 
 @Component({
   selector: 'app-globe',
   templateUrl: './globe.component.html',
   styleUrls: ['./globe.component.sass']
 })
-export class GlobeComponent implements OnInit, AfterViewInit {
+export class GlobeComponent implements OnInit {
   @ViewChild('canvas') canvasRef: ElementRef;
 
   private globe: Globe;
@@ -37,9 +38,15 @@ export class GlobeComponent implements OnInit, AfterViewInit {
   private resetSelection = new Subject<void>();
   private resetSelection$ = this.resetSelection.asObservable();
 
+  private articles: Article[] = [];
   private nearThreshold = 500; // anything within 500km is considered "near"
   private nearArticles: Article[] = [];
   private locationGraph = new LocationGraph();
+
+  private isLoggedIn: boolean;
+
+  private initializedSignal = new ReplaySubject(1);
+  private initializedSignal$ = this.initializedSignal.asObservable();
 
   private get canvas(): HTMLCanvasElement {
     return this.canvasRef.nativeElement;
@@ -47,22 +54,52 @@ export class GlobeComponent implements OnInit, AfterViewInit {
 
   constructor(private textureLoaderService: TextureLoaderService,
               private mouseEmitter: MouseEmitterService,
-              private renderEvents: RenderEventsService) { }
+              private renderEvents: RenderEventsService,
+              private authService: AuthService,
+              private facebookService: FacebookService) { }
 
   ngOnInit() {
-    this.resetSelection$.subscribe(() => {
-      this.hasSelectedArticle = false;
-      this.selectedArticle = null;
-      this.mouseEmitter.updateMouseCoord(new Vector2(Infinity, Infinity));
-    });
-  }
-
-  ngAfterViewInit() {
+    this.resetSelection$.subscribe(() => this.clearSelection());
+    this.renderEvents.events$.subscribe(e => this.processRenderEvent(e));
     this.textureLoaderService
       .getTexture('../assets/img/earthBlueHD.png')
       .subscribe(texture => this.initializeRender(texture));
-    this.renderEvents.events$
-      .subscribe(e => this.processRenderEvent(e));
+    this.authService.authState.subscribe((user) => {
+      this.isLoggedIn = (user != null);
+      if (this.isLoggedIn) {
+        this.facebookService.getPlaces().subscribe((places) => {
+          places.forEach(place => this.locationGraph.addNode(place));
+          this.initializedSignal$.subscribe(() => this.addNearPlaces());
+        });
+      } else {
+        this.removeNearPlace();
+      }
+    });
+  }
+
+  private clearSelection() {
+    this.hasSelectedArticle = false;
+    this.selectedArticle = null;
+    this.mouseEmitter.updateMouseCoord(new Vector2(Infinity, Infinity));
+  }
+
+  private addNearPlaces() {
+    for (const article of this.articles) {
+      const nearPlaces = this.getNearPlaces(article);
+      if (nearPlaces.length) {
+        article.addNearLocation(nearPlaces[0]);
+      }
+    }
+  }
+
+  private removeNearPlace() {
+    for (const article of this.articles) {
+      const nearPlaces = this.getNearPlaces(article);
+      if (nearPlaces.length) {
+        article.removeNearLocation();
+      }
+    }
+    this.locationGraph.removeNodesOfType('PlaceGN');
   }
 
   private initializeRender(texture: Texture) {
@@ -113,15 +150,22 @@ export class GlobeComponent implements OnInit, AfterViewInit {
       newArticleInfo.latlong = latlong;
       newArticleInfo.id = this.makeid(10);
       const article = new Article(newArticleInfo);
-      this.locationGraph.addNode(article);
       this.globe.addArticle(article);
+      this.articles.push(article);
+      this.locationGraph.addNode(article);
     }
     for (const node of this.locationGraph.nodes) {
       this.locationGraph.sortEdges(node);
     }
-    console.log(this.locationGraph);
+    this.initializedSignal.next(true);
+    this.initializedSignal.complete();
   }
 
+  /**
+   * generates a random char
+   * REMOVE ONCE WE HAVE LIVE DATA
+   * @param length number indicating the length of random chars
+   */
   private makeid(length: number): string {
     let text = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -131,10 +175,24 @@ export class GlobeComponent implements OnInit, AfterViewInit {
     return text;
   }
 
+  private getNearPlaces(src: Article) {
+    this.locationGraph.sortEdges(src);
+    return this.locationGraph
+      .getEdges(src)
+      .filter(
+        edge => edge.dest.constructor.name === 'PlaceGN' && edge.distance <= this.nearThreshold
+      )
+      .map(edge => edge.dest as PlaceGN);
+  }
+
   private getNearArticles(src: Article) {
-    return this.locationGraph.getEdges(src).filter((edge) => {
-      return edge.distance <= this.nearThreshold;
-    });
+    this.locationGraph.sortEdges(src);
+    return this.locationGraph
+      .getEdges(src)
+      .filter(edge =>
+        edge.dest.constructor.name === 'Article' && edge.distance <= this.nearThreshold
+      )
+      .map(edge => edge.dest as Article);
   }
 
   private processRenderEvent(e: RenderEvent) {
@@ -142,10 +200,7 @@ export class GlobeComponent implements OnInit, AfterViewInit {
       case EventType.Click: {
         this.hasSelectedArticle = true;
         this.selectedArticle = e.payload;
-        const articles = this.getNearArticles(this.selectedArticle);
-        this.nearArticles = articles.map((edge) => {
-          return edge.dest as Article;
-        });
+        this.nearArticles = this.getNearArticles(this.selectedArticle);
         break;
       }
       case EventType.Null: {

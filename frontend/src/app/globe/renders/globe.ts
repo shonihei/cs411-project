@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LatLong } from '../../shared/latlong';
+import { LatLong } from '../../shared/locations';
 import { Article } from './article';
 import { OrbitControls } from 'three-orbitcontrols-ts';
 import { MouseEmitterService } from '../../services/mouse-emitter.service';
@@ -169,6 +169,7 @@ export class Globe {
   }
 
   public addArticle(article: Article) {
+    article.initialize();
     article.readySignal$.subscribe(() => {
       const latlongRad = article.latlong.latlongRad;
       const cartesianCoord = this.convertToCartesian(latlongRad);

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LatLong } from '../../shared/latlong';
+import { LatLong, PlaceGN } from '../../shared/locations';
 import { Subject } from 'rxjs';
 import { Node } from '../../shared/location-graph';
 
@@ -38,7 +38,27 @@ export class Article implements ArticleInfo {
     this.urlToImage = articleInfo.urlToImage;
     this.publishedAt = articleInfo.publishedAt;
     this.content = articleInfo.content;
+  }
 
+  public readySignal$ = new Subject();
+
+  private meshGroup: THREE.Group;
+  public pulseMesh: THREE.Mesh;
+  private boxMesh: THREE.Mesh;
+  private nearLocationMesh: THREE.Mesh;
+  private image: HTMLImageElement;
+
+  private textureWidth = 256;
+  private textureHeight = 128;
+  // length of article description in each line
+  private descrLineLength = 180;
+  private descrnumLines = 2;
+  // length of article title
+  private articleLineLength = 180;
+
+  private nearPlace: PlaceGN;
+
+  public initialize() {
     this.meshGroup = new THREE.Group();
     this.meshGroup.name = 'article';
 
@@ -50,21 +70,6 @@ export class Article implements ArticleInfo {
       this.notifyReady();
     });
   }
-
-  public readySignal$ = new Subject();
-
-  private meshGroup: THREE.Group;
-  public pulseMesh: THREE.Mesh;
-  private boxMesh: THREE.Mesh;
-  private image: HTMLImageElement;
-
-  private textureWidth = 256;
-  private textureHeight = 128;
-  // length of article description in each line
-  private descrLineLength = 180;
-  private descrnumLines = 2;
-  // length of article title
-  private articleLineLength = 180;
 
   /**
    * Notifies to subscribers that the article is ready to be loaded
@@ -154,6 +159,7 @@ export class Article implements ArticleInfo {
     context.fillStyle = '#545454';
     context.fillText(this.source, 10, 72);
   }
+
   /**
    * Creates 2D shape container where article content will be rendered to.
    */
@@ -177,6 +183,54 @@ export class Article implements ArticleInfo {
     this.boxMesh.add(border);
 
     this.meshGroup.add(this.boxMesh);
+  }
+
+  removeNearLocation() {
+    if (this.nearLocationMesh) {
+      this.boxMesh.remove(this.nearLocationMesh);
+      this.nearLocationMesh = undefined;
+      this.nearPlace = undefined;
+    }
+  }
+
+  addNearLocation(place: PlaceGN) {
+    this.nearPlace = place;
+
+    const texture = this.createNearLocationTexture(place);
+    texture.needsUpdate = true;
+    texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.repeat.set(0.02, 0.044);   // magic number: don't ask me how i got it
+    texture.offset.set(-0.0005, 0.35); // magic number: don't ask me how i got it
+
+    this.nearLocationMesh = this.createNearLocationBox(texture);
+    this.nearLocationMesh.position.set(0, 11, 0);
+    this.boxMesh.add(this.nearLocationMesh);
+  }
+
+  private createNearLocationBox(texture: THREE.Texture): THREE.Mesh {
+    const rec = this.makeRectangle(0, 0, 50, 5, 1.5);
+    const geo = new THREE.ShapeGeometry(rec);
+    geo.center();
+    const mat = new THREE.MeshBasicMaterial({ map: texture });
+    const mesh = new THREE.Mesh(geo, mat);
+    const edge = new THREE.EdgesGeometry(geo);
+    const bor = new THREE.LineSegments(edge, new THREE.LineBasicMaterial({ color: 0x444444 }));
+    mesh.add(bor);
+    return mesh;
+  }
+
+  private createNearLocationTexture(place: PlaceGN): THREE.Texture {
+    const canvas = document.createElement('canvas');
+    canvas.width = this.textureWidth;
+    canvas.height = this.textureHeight;
+
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#2eba64';
+    context.fillRect(0, 0, this.textureWidth, this.textureHeight);
+    context.font = '12px Roboto';
+    context.fillStyle = '#ffffff';
+    context.fillText(`Near ${place.name}`, 10, 72);
+    return new THREE.Texture(canvas);
   }
 
   /**

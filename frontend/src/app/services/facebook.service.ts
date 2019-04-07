@@ -3,6 +3,7 @@ import { AuthService, SocialUser } from 'angularx-social-login';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { HometownResponse, TaggedPlacesResponse } from '../shared/facebook-api';
+import { PlaceGN, LatLong } from '../shared/locations';
 
 @Injectable({
   providedIn: 'root'
@@ -47,6 +48,25 @@ export class FacebookService {
 
   getPlaces() {
     return this.http
-      .get<TaggedPlacesResponse>(this.makeUrl('/me/tagged_places'));
+      .get<TaggedPlacesResponse>(this.makeUrl('/me/tagged_places', { limit: 100 }))
+      .pipe(
+        map((res) => {
+          const places = res.data.map(placeTag => placeTag.place);
+          const existingIds = new Set();
+          return places.filter((place) => {
+            if (!existingIds.has(place.id)) {
+              existingIds.add(place.id);
+              return true;
+            }
+            return false;
+          });
+        }),
+        map((places) => {
+          return places.map((place) => {
+            return new PlaceGN(
+              place.id, place.name, new LatLong(place.location.latitude, place.location.longitude)
+            );
+          });
+        }));
   }
 }

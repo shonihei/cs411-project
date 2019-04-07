@@ -3,6 +3,7 @@
   <button class="close-btn" (click)="closeViewer()"></button>
   <div class="main-article">
     <div class="header">
+      <span *ngIf="mainArticle.nearPlace" class="near-place">Near <b>{{ mainArticle.nearPlace.name }}</b></span>
       <h6 class="source">{{ mainArticle.source }}</h6>
       <h4 class="title">{{ mainArticle.title }}</h4>
       <h6 class="author">By {{ mainArticle.author }}</h6>
