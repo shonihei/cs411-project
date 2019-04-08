@@ -2,6 +2,9 @@
   <div class="nav-container">
     <div class="logged-in-state" *ngIf="isLoggedIn; else anonymous">
       <span class="greetings">Hello, <b>{{user.firstName}}</b></span>
+      <div class="profile-pic-container">
+        <img src="{{ user.photoUrl }}" alt="">
+      </div>
       <span class="separator"></span>
       <button class="logout-btn" (click)="signOut()">Logout</button>
     </div>
