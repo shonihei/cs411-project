@@ -44,10 +44,9 @@ NEWS_API_KEY=PUT_KEY_HERE
 ```
 
 #### 4. Running the development server **(WITH THE VIRUAL ENVIRONMENT ACTIVATED)**
-To run the flask server, simply run the following 2 commands:
+To run the flask server, simply run this command:
 ```bash
-export FLASK_DEBUG=1
-flask run
+python flask.py
 ```
 This will start the development server in `localhost:5000` and the server will automatically reload everytime you change the code.
 
