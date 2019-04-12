@@ -1,5 +1,6 @@
 import pymongo
 from newsapi import NewsApiClient
+import os
 client = pymongo.MongoClient("mongodb+srv://admin:<password>@worldnewsapp-1zwxu.mongodb.net/test?retryWrites=true")
 db = client["mydatabase"]
 mycol = db["articleData"]
