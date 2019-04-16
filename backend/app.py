@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 import os
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
-from backgroundjob import job
+from backgroundjob import extract_articles
+from datetime import datetime
 
 # load environment variables
 APP_ROOT = os.path.dirname(__file__)
@@ -15,7 +16,12 @@ newsapi = NewsApiClient(api_key=os.getenv('NEWS_API_KEY'))
 
 # initialize and start background job
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=job, trigger='interval', seconds=10)
+scheduler.add_job(
+    func=extract_articles, 
+    trigger='interval', 
+    next_run_time=datetime.now(), 
+    minutes=15
+)
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
