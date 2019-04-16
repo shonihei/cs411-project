@@ -41,6 +41,10 @@ touch .env
 Open up `.env` file that you just created and add the following:
 ```bash
 NEWS_API_KEY=PUT_KEY_HERE
+DANDELION_API_KEY=PUT_KEY_HERE
+DB_USERNAME=PUT_KEY_HERE
+DB_PW=PUT_KEY_HERE
+OPENCAGE_API_KEY=PUT_KEY_HERE
 ```
 
 #### 4. Running the development server **(WITH THE VIRUAL ENVIRONMENT ACTIVATED)**
