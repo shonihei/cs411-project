@@ -79,11 +79,14 @@ def extract_places(article):
 def get_latlong(place_name):
   try:
     geocode_res = geocoder.geocode(place_name)
-    latlong = geocode_res[0]['geometry']
-    return {
-      'lat': latlong['lat'],
-      'long': latlong['lng']
-    }
+    if geocode_res:
+      latlong = geocode_res[0]['geometry']
+      return {
+        'lat': latlong['lat'],
+        'long': latlong['lng']
+      }
+    else:
+      return {}
   except UnknownError:
     logger.error('geocoder encountered unknown error')
   except RateLimitExceededError:
@@ -99,6 +102,9 @@ def process_articles(articles):
       if places:
         place = places[0]
         latlong = get_latlong(place['label'])
+        if not latlong:
+          logger.warn('skipping "{}" because failed to convert "{}" to latlong'.format(slug, place['label']))
+          continue
         article['latlong'] = latlong
         try:
           article_collection.insert_one(article)
