@@ -23,6 +23,19 @@ export class LocationGraph {
     this.addEdges(node);
   }
 
+  removeNode(targetNode: Node) {
+    this.nodes.splice(this.nodes.indexOf(targetNode), 1);
+    for (const node of Array.from(this.adjList.keys())) {
+      if (node === targetNode) {
+        this.adjList.delete(node);
+      } else {
+        this.adjList.set(node, this.adjList.get(node).filter((edge) => {
+          return edge.dest !== targetNode;
+        }));
+      }
+    }
+  }
+
   getEdges(node: Node): Edge[] {
     return this.adjList.get(node);
   }

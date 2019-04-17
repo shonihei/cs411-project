@@ -2,8 +2,9 @@ import * as THREE from 'three';
 import { LatLong, PlaceGN } from '../../shared/locations';
 import { Subject } from 'rxjs';
 import { Node } from '../../shared/location-graph';
+import { ArticleInfo } from '../../shared/article-api';
 
-export interface ArticleInfo extends Node {
+export interface ArticleNode extends Node {
   source?: string;
   author?: string;
   title: string;
@@ -14,7 +15,7 @@ export interface ArticleInfo extends Node {
   content?: string;
 }
 
-export class Article implements ArticleInfo {
+export class Article implements ArticleNode {
   readonly id: string;
   readonly latlong: LatLong;
   readonly source?: string;
@@ -26,18 +27,18 @@ export class Article implements ArticleInfo {
   readonly publishedAt?: string;
   readonly content?: string;
 
-  constructor(articleInfo: ArticleInfo) {
+  constructor(articleRes: ArticleInfo) {
     // this is very dump, fix later
-    this.latlong = articleInfo.latlong;
-    this.id = articleInfo.id;
-    this.source = articleInfo.source;
-    this.author = articleInfo.author;
-    this.title = articleInfo.title;
-    this.description = articleInfo.description;
-    this.url = articleInfo.url;
-    this.urlToImage = articleInfo.urlToImage;
-    this.publishedAt = articleInfo.publishedAt;
-    this.content = articleInfo.content;
+    this.latlong = new LatLong(articleRes.latlong.lat, articleRes.latlong.long);
+    this.id = articleRes.slug;
+    this.source = articleRes.source.name;
+    this.author = articleRes.author;
+    this.title = articleRes.title;
+    this.description = articleRes.description;
+    this.url = articleRes.url;
+    this.urlToImage = articleRes.urlToImage;
+    this.publishedAt = articleRes.publishedAt;
+    this.content = articleRes.content;
   }
 
   public readySignal$ = new Subject();
@@ -62,13 +63,29 @@ export class Article implements ArticleInfo {
     this.meshGroup = new THREE.Group();
     this.meshGroup.name = 'article';
 
-    this.loadImage(this.urlToImage).subscribe((img) => {
-      this.image = img;
+    if (this.urlToImage) {
+      this.loadImage(`https://cors-anywhere.herokuapp.com/${this.urlToImage}`)
+        .subscribe(
+        (img) => {
+          this.image = img;
+          this.createPulse();
+          this.createArticleBox();
+          this.createConnection();
+          this.notifyReady();
+        },
+        (err) => {
+          console.log(err);
+        });
+    } else {
       this.createPulse();
       this.createArticleBox();
       this.createConnection();
       this.notifyReady();
-    });
+    }
+  }
+
+  hasNearPlace(): boolean {
+    return !!this.nearPlace;
   }
 
   /**
@@ -104,7 +121,9 @@ export class Article implements ArticleInfo {
     this.writeDescription(context);
     this.writeSource(context);
 
-    context.drawImage(this.image, 0, 0, this.image.width, this.image.height, 198, 10, 50, 50);
+    if (this.image) {
+      context.drawImage(this.image, 0, 0, this.image.width, this.image.height, 198, 10, 50, 50);
+    }
 
     const texture = new THREE.Texture(canvas);
     texture.needsUpdate = true;
@@ -252,7 +271,7 @@ export class Article implements ArticleInfo {
    */
   private loadImage(url: string): Subject<HTMLImageElement> {
     const img = new Image();
-    img.src = url;
+    img.crossOrigin = 'Anonymous';
     const obs = new Subject<HTMLImageElement>();
     img.onload = () => {
       obs.next(img);
@@ -261,6 +280,7 @@ export class Article implements ArticleInfo {
     img.onerror = (e) => {
       obs.error(e);
     };
+    img.src = url;
     return obs;
   }
 
@@ -325,6 +345,10 @@ export class Article implements ArticleInfo {
 
   public addToScene(scene: THREE.Scene) {
     scene.add(this.meshGroup);
+  }
+
+  public removeFromScene(scene: THREE.Scene) {
+    scene.remove(this.meshGroup);
   }
 
   /**

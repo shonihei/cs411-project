@@ -138,7 +138,7 @@ export class Globe {
                                     [0, 0.1, 0.2], [0, 0.7, 0]);
     const clip = new THREE.AnimationClip('default', 0.3, [opacityKF]);
     this.selectorAnimationMixer = new THREE.AnimationMixer(this.selector);
-    this.selectorAnimationMixer.addEventListener('finished', (e) => {
+    this.selectorAnimationMixer.addEventListener('finished', () => {
       this.selector.visible = false;
     });
     this.selectorClipAction = this.selectorAnimationMixer.clipAction(clip);
@@ -169,7 +169,6 @@ export class Globe {
   }
 
   public addArticle(article: Article) {
-    article.initialize();
     article.readySignal$.subscribe(() => {
       const latlongRad = article.latlong.latlongRad;
       const cartesianCoord = this.convertToCartesian(latlongRad);
@@ -181,6 +180,11 @@ export class Globe {
       this.articles.push(article);
       this.articleMap[article.meshId] = article;
     });
+    article.initialize();
+  }
+
+  public removeArticle(article: Article) {
+    article.removeFromScene(this.scene);
   }
 
   /**

@@ -8,7 +8,7 @@ export class NewsService {
 
   constructor(private http: HttpClient) { }
 
-  getNews(query: string) {
-    return this.http.get(`http://localhost:5000/articles?q=${query}`);
+  getNews(n: number) {
+    return this.http.get(`http://localhost:5000/articles?n=${n}`);
   }
 }
