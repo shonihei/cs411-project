@@ -4,6 +4,9 @@ import { Subject } from 'rxjs';
 import { Node } from '../../shared/location-graph';
 import { ArticleInfo } from '../../shared/article-api';
 
+/**
+ * Node-type interface for storing information in the location graph
+ */
 export interface ArticleNode extends Node {
   source?: string;
   author?: string;
@@ -15,7 +18,11 @@ export interface ArticleNode extends Node {
   content?: string;
 }
 
+/**
+ * Holds information about an article and renders it to THREE.js Scene
+ */
 export class Article implements ArticleNode {
+  // Information related to the article being displayed
   readonly id: string;
   readonly latlong: LatLong;
   readonly source?: string;
@@ -28,7 +35,6 @@ export class Article implements ArticleNode {
   readonly content?: string;
 
   constructor(articleRes: ArticleInfo) {
-    // this is very dump, fix later
     this.latlong = new LatLong(articleRes.latlong.lat, articleRes.latlong.long);
     this.id = articleRes.slug;
     this.source = articleRes.source.name;
@@ -41,8 +47,11 @@ export class Article implements ArticleNode {
     this.content = articleRes.content;
   }
 
+  // Signal to its subscribers when render is complete
+  // This is needed because fetching thumbnails is async
   public readySignal$ = new Subject();
 
+  // Objects for rendering the article
   private meshGroup: THREE.Group;
   public pulseMesh: THREE.Mesh;
   private boxMesh: THREE.Mesh;
@@ -57,13 +66,18 @@ export class Article implements ArticleNode {
   // length of article title
   private articleLineLength = 180;
 
+  // PlaceGN instance physically closest to the article
   private nearPlace: PlaceGN;
 
+  /**
+   * Initializes the article render and fetches thumbnails if available
+   */
   public initialize() {
     this.meshGroup = new THREE.Group();
     this.meshGroup.name = 'article';
 
     if (this.urlToImage) {
+      // WebAPI blocks cross-origin request so we need to use a proxy server for demo
       this.loadImage(`https://cors-anywhere.herokuapp.com/${this.urlToImage}`)
         .subscribe(
         (img) => {
@@ -97,6 +111,10 @@ export class Article implements ArticleNode {
     this.readySignal$.complete();
   }
 
+  /**
+   * Creates pulse information to be rendered at the intersection between
+   * article and the globe
+   */
   private createPulse() {
     const geometry = new THREE.CircleGeometry(7, 32);
     const material = new THREE.MeshBasicMaterial({ color: 0xfc2f2f });
@@ -204,6 +222,9 @@ export class Article implements ArticleNode {
     this.meshGroup.add(this.boxMesh);
   }
 
+  /**
+   * If this article has a location associated with it, remove the near location render
+   */
   removeNearLocation() {
     if (this.nearLocationMesh) {
       this.boxMesh.remove(this.nearLocationMesh);
@@ -212,6 +233,10 @@ export class Article implements ArticleNode {
     }
   }
 
+  /**
+   * Adds a near location render to the article
+   * @param place place instance to assocaite with the article
+   */
   addNearLocation(place: PlaceGN) {
     this.nearPlace = place;
 
@@ -329,6 +354,10 @@ export class Article implements ArticleNode {
     this.meshGroup.position.set(pos.x, pos.y, pos.z);
   }
 
+  /**
+   * Rotate this article to look away from target
+   * @param target target to look away from
+   */
   public lookAwayFrom(target: THREE.Mesh) {
     const v = new THREE.Vector3();
     v.subVectors(this.meshGroup.position, target.position).add(this.meshGroup.position);
@@ -339,14 +368,26 @@ export class Article implements ArticleNode {
     this.boxMesh.lookAt(target.position);
   }
 
+  /**
+   * Add the pulse object of this article to a animation group
+   * @param ag AnimationGroup to add the pulse to
+   */
   public addToAnimationGroup(ag: THREE.AnimationObjectGroup) {
     ag.add(this.pulseMesh);
   }
 
+  /**
+   * Add this article to a scene in order to render it
+   * @param scene Scene to add the article to
+   */
   public addToScene(scene: THREE.Scene) {
     scene.add(this.meshGroup);
   }
 
+  /**
+   * Remove this article from scene
+   * @param scene Scene to remove the article from
+   */
   public removeFromScene(scene: THREE.Scene) {
     scene.remove(this.meshGroup);
   }

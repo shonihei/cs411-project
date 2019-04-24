@@ -39,6 +39,9 @@ article_collection = db.articles
 newsapi = NewsApiClient(api_key=os.getenv('NEWS_API_KEY'))
 geocoder = OpenCageGeocode(os.getenv('OPENCAGE_API_KEY'))
 
+'''Fetches sources from newsapi and picks random `NUM_SOURCES` sources
+The randomly selected sources will then be encoded in comma separated string
+'''
 def get_encoded_sources():
   try:
     sources_response = newsapi.get_sources(language='en')
@@ -51,6 +54,8 @@ def get_encoded_sources():
     logger.error('failed to fetch sources')
     return ''
 
+'''Given a comma-separated string of sources, fetch articles from those sources
+'''
 def get_articles(encoded_sources):
   try:
     everything_response = newsapi.get_everything(
@@ -63,6 +68,8 @@ def get_articles(encoded_sources):
     logger.error('failed to fetch articles')
     return []
 
+'''Given a specific article, extract place entities using Dandelion API
+'''
 def extract_places(article):
   url = DANDELION_TEMPLATE.format(url=article['url'], token=os.getenv('DANDELION_API_KEY'))
   raw_res = requests.get(url)
@@ -76,6 +83,8 @@ def extract_places(article):
     logger.error('failed to extract places for "{}"'.format(article['slug']))
     return []
 
+'''Given a place name, send it to geocoder to get the most-likely latlong coordinate
+'''
 def get_latlong(place_name):
   try:
     geocode_res = geocoder.geocode(place_name)
@@ -92,6 +101,11 @@ def get_latlong(place_name):
   except RateLimitExceededError:
     logger.error('geocoder exceeded rate limit')
 
+'''Given a list of articles, process each one.
+Processing entails creating a slug, checking against the database if a slug already exists,
+extracting locations if the article does not exist, converting location to latlong and 
+storing the new information into the database
+'''
 def process_articles(articles):
   for article in articles:
     slug = slugify(article['title'])
@@ -116,7 +130,8 @@ def process_articles(articles):
     else:
       logger.warn('skipping "{}" because it already exists in db'.format(slug))
 
-
+'''Main function to extract articles
+'''
 def extract_articles():
   logger.info('started extracting articles')
   sources = get_encoded_sources()

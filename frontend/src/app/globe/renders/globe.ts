@@ -9,6 +9,9 @@ class ArticleMap {
   [index: string]: Article;
 }
 
+/**
+ * Class for rendering a globe and manage articles
+ */
 export class Globe {
 
   constructor(readonly RADIUS: number, readonly SEGMENTS: number, readonly RINGS: number,
@@ -17,10 +20,12 @@ export class Globe {
               private renderEvents: RenderEventsService) {
     // mouse coordinate of infinity is used to signal that there's no mouse activity
     this.mouse = new THREE.Vector2(Infinity, Infinity);
+    // Subscribe to a mouseEmitter service that continuously streams current mouse location
     this.mouseEmitter.mouseCoord$.subscribe((coord) => {
       this.mouse.x = coord.x;
       this.mouse.y = coord.y;
     });
+    // Subscribe to events emitted by the rendering canvas
     this.renderEvents.events$.subscribe((e) => {
       if (e.type === EventType.Resize) {
         this.onResize();
@@ -47,6 +52,7 @@ export class Globe {
     }
     return this.canvas.clientWidth / this.canvas.clientHeight;
   }
+
   private renderer: THREE.WebGLRenderer;
   private camera: THREE.PerspectiveCamera;
   private scene: THREE.Scene;
@@ -55,7 +61,6 @@ export class Globe {
   private animationGroup: THREE.AnimationObjectGroup;
   private clock: THREE.Clock;
   private animationMixer: THREE.AnimationMixer;
-
   public mesh: THREE.Mesh;
 
   private fieldOfView = 45;
@@ -73,6 +78,7 @@ export class Globe {
   private articles: Article[] = [];
   private articleMap = new ArticleMap();
 
+  // rendered box that pulses when a user clicks on an article
   private selector: THREE.Mesh;
 
   private selectorAnimationMixer: THREE.AnimationMixer;
@@ -82,6 +88,7 @@ export class Globe {
     this.canvas.style.width = '100%';
     this.canvas.style.height = '100%';
 
+    // Resize campus and move camera to new aspect ratio
     this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
     this.camera.aspect = this.aspectRatio;
     this.camera.updateProjectionMatrix();
@@ -123,6 +130,10 @@ export class Globe {
     this.scene.add(this.mesh);
   }
 
+  /**
+   * When the user clicks on an article, selector box moves on top the article box and pulses
+   * to show that the user clicked on an article
+   */
   private createSelector() {
     const shape = this.makeRectangle(0, 0, 50, 15, 1.5);
     const geometry = new THREE.ShapeGeometry(shape);
@@ -168,6 +179,10 @@ export class Globe {
     return shape;
   }
 
+  /**
+   * Awaits for article to signal ready
+   * @param article article to add to the render scene
+   */
   public addArticle(article: Article) {
     article.readySignal$.subscribe(() => {
       const latlongRad = article.latlong.latlongRad;
@@ -183,6 +198,9 @@ export class Globe {
     article.initialize();
   }
 
+  /**
+   * Remove an article from this scence
+   */
   public removeArticle(article: Article) {
     article.removeFromScene(this.scene);
   }
@@ -213,6 +231,9 @@ export class Globe {
     this.camera.position.z = this.maxDistance;
   }
 
+  /**
+   * Adds Orbit Control to the scene so that the user can interact with the globe
+   */
   private addControls() {
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enablePan = false;
@@ -226,6 +247,9 @@ export class Globe {
     this.controls.maxPolarAngle = 135 * Math.PI / 180;
   }
 
+  /**
+   * Begins the rendering loop
+   */
   private startRendering() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
@@ -243,6 +267,10 @@ export class Globe {
     return this.mouse.x !== Infinity && this.mouse.y !== Infinity;
   }
 
+  /**
+   * As the globe spins, the article move and therefore the direction they're
+   * looking at will change. This method will fix that in every rendering loop.
+   */
   private updateArticleRotation() {
     this.selector.lookAt(this.camera.position);
     for (const article of this.articles) {
@@ -269,6 +297,9 @@ export class Globe {
     this.render();
   }
 
+  /**
+   * Main rendering function. This is ran in every animation frame.
+   */
   private render() {
     this.updateAutoRotateSpeed();
     this.controls.update();
@@ -284,6 +315,9 @@ export class Globe {
     this.renderer.render(this.scene, this.camera);
   }
 
+  /**
+   * Play a fraction of an animation
+   */
   private updateAnimationKeyFrame() {
     const delta = this.clock.getDelta();
     if (this.animationMixer) {
@@ -294,6 +328,9 @@ export class Globe {
     }
   }
 
+  /**
+   * Checks if current mouse position intersects with any object right now.
+   */
   private checkIntersection() {
     this.raycaster.setFromCamera(this.normalizedMouse, this.camera);
     const intersects = this.raycaster.intersectObjects(this.scene.children, true);
@@ -315,6 +352,10 @@ export class Globe {
     }
   }
 
+  /**
+   * Move selector box on top of article box and make it visible
+   * @param articleBox article box to overlay the selection box
+   */
   private showSelector(articleBox: THREE.Object3D) {
     const articleBoxPos = new THREE.Vector3();
     articleBox.getWorldPosition(articleBoxPos);

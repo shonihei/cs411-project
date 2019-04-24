@@ -11,8 +11,11 @@ export class ArticleViewerComponent implements OnInit {
 
   constructor() { }
 
+  // main article to display
   @Input() mainArticle: Article;
+  // subject to signal parent component that the user closed the viewer
   @Input() resetSelection: Subject<void>;
+  // articles that are physically near the main article
   @Input() nearArticles: Article[];
 
   ngOnInit() {

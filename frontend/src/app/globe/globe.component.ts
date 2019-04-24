@@ -7,13 +7,13 @@ import {
 } from '@angular/core';
 import { TextureLoaderService } from '../services/texture-loader.service';
 import { Globe } from './renders/globe';
-import { Article, ArticleNode } from './renders/article';
+import { Article } from './renders/article';
 import { MouseEmitterService } from '../services/mouse-emitter.service';
 import { RenderEventsService, EventType, RenderEvent } from '../services/render-events.service';
 import { Vector2, Texture } from 'three';
-import { Subject, ReplaySubject, Observable, timer } from 'rxjs';
+import { Subject, ReplaySubject, timer } from 'rxjs';
 import { LocationGraph } from '../shared/location-graph';
-import { LatLong, PlaceGN } from '../shared/locations';
+import { PlaceGN } from '../shared/locations';
 import { AuthService } from 'angularx-social-login';
 import { FacebookService } from '../services/facebook.service';
 import { NewsService } from '../services/news.service';
@@ -24,6 +24,9 @@ import { ArticleResponse } from '../shared/article-api';
   templateUrl: './globe.component.html',
   styleUrls: ['./globe.component.sass']
 })
+/**
+ * Component for managing globe and articles.
+ */
 export class GlobeComponent implements OnInit {
   @ViewChild('canvas') canvasRef: ElementRef;
 
@@ -66,12 +69,20 @@ export class GlobeComponent implements OnInit {
               private newsService: NewsService) { }
 
   ngOnInit() {
+    // Subscribe to article viewer being closed
     this.resetSelection$.subscribe(() => this.clearSelection());
+
+    // Subscribe to render events emitted by the globe
     this.renderEvents.events$.subscribe(e => this.processRenderEvent(e));
+
+    // Subscribe to the globe being fully rendered
     this.initializedSignal$.subscribe(() => {
+      // Start a timer to fetch new article every `articleFetchingInterval` ms
       timer(0, this.articleFetchingInterval).subscribe((val) => {
+        // Store articles fetched in this interval to its own array
         this.articlesByFetch[val] = [] as Article[];
         this.newsService.getNews(this.numArticles).subscribe((res: ArticleResponse) => {
+          // Add each article to render and location graph
           for (const articleInfo of res.articles) {
             const article = new Article(articleInfo);
             this.globe.addArticle(article);
@@ -94,12 +105,17 @@ export class GlobeComponent implements OnInit {
         });
       });
     });
+
+    // Request the texture loader service to load the globe texture
     this.textureLoaderService
       .getTexture('../assets/img/earthBlueHD.png')
       .subscribe(texture => this.initializeRender(texture));
+
+    // Subscribe to changes in authentication state
     this.authService.authState.subscribe((user) => {
       this.isLoggedIn = (user != null);
       if (this.isLoggedIn) {
+        // If user is logged in, fetch places from Facebook Service
         this.facebookService.getPlaces().subscribe((places) => {
           places.forEach(place => this.locationGraph.addNode(place));
           this.initializedSignal$.subscribe(() => this.addNearPlaces());
@@ -116,6 +132,8 @@ export class GlobeComponent implements OnInit {
     this.mouseEmitter.updateMouseCoord(new Vector2(Infinity, Infinity));
   }
 
+  // For each article currently stored in memory, check if any of them
+  // are close to any place visited by the user (according to facebook)
   private addNearPlaces() {
     for (const fetch in this.articlesByFetch) {
       if (this.articlesByFetch.hasOwnProperty(fetch)) {
@@ -129,6 +147,7 @@ export class GlobeComponent implements OnInit {
     }
   }
 
+  // For each article, remove near places if one exists.
   private removeNearPlace() {
     for (const fetch in this.articlesByFetch) {
       if (this.articlesByFetch.hasOwnProperty(fetch)) {
@@ -151,6 +170,7 @@ export class GlobeComponent implements OnInit {
     this.initializedSignal.complete();
   }
 
+  // Get a sorted list of places nearest to an article
   private getNearPlaces(src: Article) {
     this.locationGraph.sortEdges(src);
     return this.locationGraph
@@ -161,6 +181,7 @@ export class GlobeComponent implements OnInit {
       .map(edge => edge.dest as PlaceGN);
   }
 
+  // Get a sorted list of articles nearest to another article
   private getNearArticles(src: Article) {
     this.locationGraph.sortEdges(src);
     return this.locationGraph
@@ -171,6 +192,7 @@ export class GlobeComponent implements OnInit {
       .map(edge => edge.dest as Article);
   }
 
+  // Process user mouse events emitted by the globe renders
   private processRenderEvent(e: RenderEvent) {
     switch (e.type) {
       case EventType.Click: {

@@ -23,7 +23,10 @@ client = pymongo.MongoClient(url)
 db = client.global_news
 article_collection = db.articles
 
-# initialize and start background job
+'''Initializes background scheduler
+This background worker will fetch articles, process it and add it to the db
+as long as the flask application is running.
+'''
 scheduler = BackgroundScheduler()
 scheduler.add_job(
     func=extract_articles, 
@@ -32,11 +35,14 @@ scheduler.add_job(
     minutes=15
 )
 scheduler.start()
-atexit.register(lambda: scheduler.shutdown())
+atexit.register(lambda: scheduler.shutdown()) # shutdown scheduler when the flask app is killed
 
+# initialize flask application
 app = Flask(__name__)
 CORS(app)
 
+'''Fetches `n` random articles, encodes it in json and returns a response
+'''
 @app.route('/articles', methods=['GET'])
 def get_n_random_articles():
     n = 20
