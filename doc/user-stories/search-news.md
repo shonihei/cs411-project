@@ -8,3 +8,5 @@ The user is finding specific news stories that they are interested in, based on 
     1. If not logged on, the user will go through the “Authenticating via Facebook” story
 6. A window will appear showing the article
 7. The user clicks outside of the article to return to the globe
+
+Note this function was not added into the application due to a bottleneck of how often we could make calls to the dandelion api
